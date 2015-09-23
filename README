@@ -1,4 +1,7 @@
 = Description
+This project is a fork of djbergers win32-sspi project. My intention is to add support for the SPNEGO/Kerberos
+protocol. The following are the original README notes supplied by djberger.
+-------------------------------------------------------------------------------------------------------------
 This is an FFI implementation of SSPI on Windows.
 
 It is port, sort of, of the rubysspi library to FFI. For now, this is mainly being done as a learning excercise. Please do not use this code.
