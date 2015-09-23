@@ -1,8 +1,8 @@
 require 'base64'
-require File.join(File.dirname(__FILE__), 'windows', 'constants')
-require File.join(File.dirname(__FILE__), 'windows', 'structs')
-require File.join(File.dirname(__FILE__), 'windows', 'functions')
-require File.join(File.dirname(__FILE__), 'windows', 'misc')
+require_relative 'windows/constants'
+require_relative 'windows/structs'
+require_relative 'windows/functions'
+require_relative 'windows/misc'
 
 module Win32
   module SSPI
