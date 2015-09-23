@@ -55,7 +55,7 @@ module Windows
           self[:pvBuffer] = FFI::MemoryPointer.from_string(token)
         else
           self[:cbBuffer] = 4096 # Our TOKENBUFSIZE
-          self[:pvBuffer] = FFI::MemoryPointer.new(:char, 1024)
+          self[:pvBuffer] = FFI::MemoryPointer.new(:char, 4096)
         end
 
         self
