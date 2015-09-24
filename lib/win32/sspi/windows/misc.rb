@@ -21,7 +21,7 @@ class SecurityStatus
         @new_errno = 12 # ENOMEM
       when SEC_E_INTERNAL_ERROR
         @new_errno = 35 # Unknown
-      when SEC_E_INVALID_HANDLE, SEC_E_INVALID_TOKEN, SEC_E_UNSUPPORTED_FUNCTION, SEC_E_WRONG_PRINCIPAL
+      when SEC_E_INVALID_HANDLE, SEC_E_INVALID_TOKEN, SEC_E_UNSUPPORTED_FUNCTION, SEC_E_WRONG_PRINCIPAL,SEC_E_SECPKG_NOT_FOUND
         @new_errno = 22 # EINVAL
       when SEC_E_LOGON_DENIED
         @new_errno = 1 # EPERM
