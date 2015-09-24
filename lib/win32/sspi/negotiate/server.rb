@@ -43,15 +43,17 @@ module Win32
           end
         end
       
-        def accept_context(msg=nil)
+        def accept_context(token=nil)
           ctx = @context_handle
           @context_handle ||= CtxtHandle.new
 
-          inbuf   = SecBuffer.new.init(msg)
-          inbuf_sec  = SecBufferDesc.new.init(inbuf)
+          if token
+            input_buffer   = SecBuffer.new.init(token)
+            input_buffer_desc  = SecBufferDesc.new.init(input_buffer)
+          end
 
-          outbuf  = SecBuffer.new.init
-          outbuf_sec = SecBufferDesc.new.init(outbuf)
+          output_buffer  = SecBuffer.new.init
+          output_buffer_desc = SecBufferDesc.new.init(output_buffer)
 
           context_attributes = FFI::MemoryPointer.new(:ulong)
           expiry = TimeStamp.new
@@ -59,18 +61,18 @@ module Win32
           status = accept_security_context(
             @credentials_handle,
             ctx,
-            inbuf_sec,
+            (token ? input_buffer_desc : nil),
             ASC_REQ_DELEGATE,
             SECURITY_NATIVE_DREP,
             @context_handle,
-            outbuf_sec,
+            output_buffer_desc,
             context_attributes,
             expiry
           )
 
           if status != SEC_E_OK
             if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
-              status = complete_auth_token(@context_handle, outbuf_sec)
+              status = complete_auth_token(@context_handle, output_buffer_desc)
               if status != SEC_E_OK
                 raise SystemCallError.new('CompleteAuthToken', SecurityStatus.new(status))
               end
@@ -81,10 +83,10 @@ module Win32
             end
           end
 
-          bsize = outbuf[:cbBuffer]
-          msg = outbuf[:pvBuffer].read_string_length(bsize)
+          bsize = output_buffer[:cbBuffer]
+          token = output_buffer[:pvBuffer].read_string_length(bsize)
 
-          [status,msg]
+          [status,token]
         end
 
         def query_attributes
