@@ -1,7 +1,7 @@
 # Attempting to setup an example authenticating server
 require 'base64'
 require 'webrick'
-require 'win32/sspi/server'
+require 'win32/sspi/ntlm/server'
 
 # A way to store state across multiple requests
 class StateStore
@@ -22,7 +22,7 @@ class StateStore
   end
   
   def self.retrieve_server
-    state[:server] ||= Win32::SSPI::Server.new
+    state[:server] ||= Win32::SSPI::NTLM::Server.new
     state[:server]
   end
 end

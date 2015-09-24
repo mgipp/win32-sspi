@@ -1,11 +1,11 @@
 require 'pp'
 require 'base64'
 require 'net/http'
-require 'win32/sspi/client'
+require 'win32/sspi/ntlm/client'
 
 class RubySSPIClient
   def self.run
-    client = Win32::SSPI::Client.new
+    client = Win32::SSPI::NTLM::Client.new
     msg = client.initial_token
     type_1_msg = Base64.strict_encode64(msg)
     puts "Generated type 1 message: #{type_1_msg}"

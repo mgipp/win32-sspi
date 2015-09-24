@@ -1,2 +1,2 @@
-require_relative "test_win32_sspi_client"
-require_relative "test_win32_sspi_server"
+require_relative "test_win32_sspi_ntlm_client"
+require_relative "test_win32_sspi_ntlm_server"

@@ -2,13 +2,13 @@
 # Tests for the Win32::SSPI::Client class.
 ########################################################################
 require 'test-unit'
-require 'win32/sspi/client'
-require 'win32/sspi/server'
+require 'win32/sspi/ntlm/client'
+require 'win32/sspi/ntlm/server'
 
 class TC_Win32_SSPI_Client < Test::Unit::TestCase
   def setup
-    @client = Win32::SSPI::Client.new
-    @server = Win32::SSPI::Server.new
+    @client = Win32::SSPI::NTLM::Client.new
+    @server = Win32::SSPI::NTLM::Server.new
     @type1 = nil
     @type3 = nil
   end
@@ -196,7 +196,7 @@ class TC_Win32_SSPI_Client < Test::Unit::TestCase
   end
 end
 
-class MockClient < Win32::SSPI::Client
+class MockClient < Win32::SSPI::NTLM::Client
   def acquire_credentials_handle(*args)
     capture_state(:acquire, args)
     return super
