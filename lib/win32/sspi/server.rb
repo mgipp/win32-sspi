@@ -1,16 +1,16 @@
 require 'base64'
 require_relative 'windows/constants'
 require_relative 'windows/structs'
-require_relative 'windows/functions'
 require_relative 'windows/misc'
+require_relative 'api/server'
 
 module Win32
   module SSPI
     class Server
       include Windows::Constants
       include Windows::Structs
-      include Windows::Functions
-      extend Windows::Functions
+      include API::Server
+      extend API::Server
 
       attr_reader :type_1_message
       attr_reader :auth_type
@@ -49,7 +49,7 @@ module Win32
         @type_1_message = type_1_message
         time_struct = TimeStamp.new
 
-        status = AcquireCredentialsHandle(
+        status = acquire_credentials_handle(
           nil,
           @auth_type,
           SECPKG_CRED_INBOUND,
@@ -74,7 +74,7 @@ module Win32
 
         context_attr = FFI::MemoryPointer.new(:ulong)
 
-        status = AcceptSecurityContext(
+        status = accept_security_context(
           @credentials,
           nil,
           inbuf_sec,
@@ -86,9 +86,10 @@ module Win32
           expiry
         )
 
+        #Fixme: There is a bug here if path is ever traversed ... output is not defined
         if status != SEC_E_OK
           if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
-            if CompleteAuthToken(@context, output) != SEC_E_OK
+            if complete_auth_token(@context, output) != SEC_E_OK
               raise SystemCallError.new('CompleteAuthToken', FFI.errno)
             end
           else
@@ -113,7 +114,7 @@ module Win32
 
         context_attr = FFI::MemoryPointer.new(:ulong)
 
-        status = AcceptSecurityContext(
+        status = accept_security_context(
           @credentials,
           @context,
           inbuf_sec,
@@ -132,7 +133,7 @@ module Win32
         # Finally, let's get the user and domain
         ptr = SecPkgContext_Names.new
 
-        qstatus = QueryContextAttributes(@context, SECPKG_ATTR_NAMES, ptr)
+        qstatus = query_context_attributes(@context, SECPKG_ATTR_NAMES, ptr)
 
         if qstatus != SEC_E_OK
           raise SytemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
@@ -144,7 +145,7 @@ module Win32
           @domain, @username = user_string.split("\\")
         end
 
-        if @credentials && FreeCredentialsHandle(@credentials) != SEC_E_OK
+        if @credentials && free_credentials_handle(@credentials) != SEC_E_OK
           raise SystemCallError.new('FreeCredentialsHandle', FFI.errno)
         end
 
@@ -158,7 +159,7 @@ module Win32
         spi = FFI::MemoryPointer.new(SecPkgInfo, 20) # Should be plenty
         arr = []
 
-        result = EnumerateSecurityPackages(num, spi)
+        result = enumerate_security_packages(num, spi)
 
         if result != SEC_E_OK
           raise SystemCallError.new('EnumerateSecurityPackages', FFI.errno)
@@ -174,7 +175,7 @@ module Win32
               ptr += SecPkgInfo.size
             }
           ensure
-            FreeContextBuffer(ptr)
+            free_context_buffer(ptr)
           end
         end
 

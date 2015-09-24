@@ -1,15 +1,15 @@
 require 'base64'
 require_relative 'windows/constants'
 require_relative 'windows/structs'
-require_relative 'windows/functions'
 require_relative 'windows/misc'
+require_relative 'api/client'
 
 module Win32
   module SSPI
     class Client
       include Windows::Constants
       include Windows::Structs
-      include Windows::Functions
+      include API::Client
 
       attr_reader :username
       attr_reader :domain
@@ -110,7 +110,7 @@ module Win32
           end
         end
 
-        status = AcquireCredentialsHandle(
+        status = acquire_credentials_handle(
           nil,
           @auth_type,
           SECPKG_CRED_OUTBOUND,
@@ -132,7 +132,7 @@ module Win32
         sec_buf = SecBuffer.new.init
         buffer  = SecBufferDesc.new.init(sec_buf)
 
-        status = InitializeSecurityContext(
+        status = initialize_security_context(
           @credentials,
           nil,
           nil,
@@ -171,7 +171,7 @@ module Win32
         sec_buf_out = SecBuffer.new.init
         buf_out = SecBufferDesc.new.init(sec_buf_out)
 
-        status = InitializeSecurityContext(
+        status = initialize_security_context(
           @credentials,
           @context,
           nil,
@@ -195,7 +195,7 @@ module Win32
 
         ptr = SecPkgContext_Names.new
 
-        status = QueryContextAttributes(@context, SECPKG_ATTR_NAMES, ptr)
+        status = query_context_attributes(@context, SECPKG_ATTR_NAMES, ptr)
 
         if status != SEC_E_OK
           raise SystemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
@@ -207,11 +207,11 @@ module Win32
           @domain, @username = user_string.split("\\")
         end
 
-        if @context && DeleteSecurityContext(@context) != SEC_E_OK
+        if @context && delete_security_context(@context) != SEC_E_OK
           raise SystemCallError.new('DeleteSecurityContext', FFI.errno)
         end
 
-        if @credentials && FreeCredentialsHandle(@credentials) != SEC_E_OK
+        if @credentials && free_credentials_handle(@credentials) != SEC_E_OK
           raise SystemCallError.new('FreeCredentialsHandle', FFI.errno)
         end
 

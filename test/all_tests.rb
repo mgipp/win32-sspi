@@ -1,0 +1,2 @@
+require_relative "test_win32_sspi_client"
+require_relative "test_win32_sspi_server"

@@ -103,11 +103,146 @@ class TC_Win32_SSPI_Client < Test::Unit::TestCase
   test "complete_authentication raises an error if a bogus token is passed" do
     assert_raise(Errno::EINVAL){ @client.complete_authentication('foo') }
   end
+  
+  test "initial_token invokes acquire_credentials_handle as expected" do
+    client = Class.new(MockClient).new
+    assert_nothing_raised{ client.initial_token(false) }
+    args = client.retrieve_state(:acquire)
+    
+    assert_equal 9, args.length, "acquire_credentials_handle should have 9 arguments"
+    assert_nil args[0], "unexpected psz_principal"
+    assert_equal 'NTLM', args[1], "unexpected psz_package"
+    assert_equal Windows::Constants::SECPKG_CRED_OUTBOUND, args[2], "unexpected f_credentialuse"
+    assert_nil args[3], "unexpected pv_logonid"
+    assert_kind_of Windows::Structs::SEC_WINNT_AUTH_IDENTITY, args[4], "unexpected p_authdata"
+    assert_nil args[5], "unexpected p_getkeyfn"
+    assert_nil args[6], "unexpected p_getkeyarg"
+    assert_kind_of Windows::Structs::CredHandle, args[7], "unexpected ph_newcredentials"
+    assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
+  end
+  
+  test "initial_token invokes initialize_security_context as expected" do
+    client = Class.new(MockClient).new
+    assert_nothing_raised{ client.initial_token(false) }
+    args = client.retrieve_state(:isc)
+    
+    assert_equal 12, args.length, "unexpected arguments"
+    assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_newcredentials"
+    assert_nil args[1], "unexpected ph_context"
+    assert_nil args[2], "unexpected psz_targetname"
+    
+    rflags = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
+              Windows::Constants::ISC_REQ_REPLAY_DETECT | 
+              Windows::Constants::ISC_REQ_CONNECTION
+    assert_equal rflags, args[3], "unexpected f_contextreq"
+    assert_equal 0, args[4], "unexpected reserved1"
+    assert_equal Windows::Constants::SECURITY_NETWORK_DREP, args[5], "unexpected targetrep"
+    assert_nil args[6], "unexpected p_input"
+    assert_equal 0, args[7], "unexpected reserved2"
+    assert_kind_of Windows::Structs::CtxtHandle, args[8], "unexpected ph_newcontext"
+    assert_kind_of Windows::Structs::SecBufferDesc, args[9], "unexpected ph_newcontext"
+    assert_kind_of FFI::MemoryPointer, args[10], "unexpected pf_contextattr"
+    assert_kind_of Windows::Structs::TimeStamp, args[11], "unexpected pts_expiry"
+  end
+  
+  test "complet_authentication invokes windows api as expected" do
+    client = Class.new(MockClient).new
+    assert_nothing_raised{ @type2 = @server.initial_token(client.initial_token(false)) }
+    assert_nothing_raised{ @type3 = client.complete_authentication(@type2) }
+    
+    # check the initialize_security_context args
+    args = client.retrieve_state(:isc)
+    assert_equal 12, args.length
+    assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_newcredentials"
+    assert_kind_of Windows::Structs::CtxtHandle, args[1], "unexpected ph_context"
+    assert_nil args[2], "unexpected psz_targetname"
+    
+    rflags = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
+              Windows::Constants::ISC_REQ_REPLAY_DETECT | 
+              Windows::Constants::ISC_REQ_CONNECTION
+    assert_equal rflags, args[3], "unexpected f_contextreq"
+    assert_equal 0, args[4], "unexpected reserved1"
+    assert_equal Windows::Constants::SECURITY_NETWORK_DREP, args[5], "unexpected targetrep"
+    assert_kind_of Windows::Structs::SecBufferDesc, args[6], "unexpected p_input"
+    assert_equal 0, args[7], "unexpected reserved2"
+    assert_kind_of Windows::Structs::CtxtHandle, args[8], "unexpected ph_newcontext"
+    assert_kind_of Windows::Structs::SecBufferDesc, args[9], "unexpected ph_newcontext"
+    assert_kind_of FFI::MemoryPointer, args[10], "unexpected pf_contextattr"
+    assert_kind_of Windows::Structs::TimeStamp, args[11], "unexpected pts_expiry"
+
+    # check the query_context_attributes args
+    args = client.retrieve_state(:qca)
+    assert_equal 3, args.length
+    assert_kind_of Windows::Structs::CtxtHandle, args[0], "unexpected ph_context"
+    assert_equal Windows::Constants::SECPKG_ATTR_NAMES, args[1], "unexpected ul_attribute"
+    assert_kind_of Windows::Structs::SecPkgContext_Names, args[2], "unexpected p_buffer"
+
+    # check the delete_secirity context args
+    args = client.retrieve_state(:dsc)
+    assert_equal 1, args.length
+    assert_kind_of Windows::Structs::CtxtHandle, args[0], "unexpected ph_context"
+
+    # check the free_credentials_handle args
+    args = client.retrieve_state(:fch)
+    assert_equal 1, args.length
+    assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
+  end
 
   def teardown
     @client = nil
     @server = nil
     @type1  = nil
     @type3  = nil
+  end
+end
+
+class MockClient < Win32::SSPI::Client
+  def acquire_credentials_handle(*args)
+    capture_state(:acquire, args)
+    return super
+  end
+  
+  def initialize_security_context(*args)
+    capture_state(:isc, args)
+    return super
+  end
+  
+  def query_context_attributes(*args)
+    capture_state(:qca,args)
+    return super
+  end
+  
+  def delete_security_context(*args)
+    capture_state(:dsc,args)
+    return super
+  end
+  
+  def free_credentials_handle(*args)
+    capture_state(:fch,args)
+    return super
+  end
+  
+  def capture_state(key,value)
+    self.class.capture_state(key,value)
+  end
+  
+  def retrieve_state(key)
+    self.class.retrieve_state(key)
+  end
+  
+  def self.state
+    @state ||= Hash.new
+  end
+  
+  def self.capture_state(key,value)
+    state[key] = value
+  end
+  
+  def self.retrieve_state(key)
+    state[key]
+  end
+  
+  def self.clear_state
+    state.clear
   end
 end
