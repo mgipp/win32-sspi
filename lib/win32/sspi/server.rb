@@ -78,7 +78,7 @@ module Win32
           @credentials,
           nil,
           inbuf_sec,
-          ASC_REQ_DELEGATE, # Just imitating mod_auth_sspi here
+          ASC_REQ_CONFIDENTIALITY, # Just imitating mod_auth_sspi here
           SECURITY_NATIVE_DREP,
           @context,
           outbuf_sec,
@@ -112,17 +112,20 @@ module Win32
         inbuf_sec = SecBufferDesc.new.init(inbuf)
 
         context_attr = FFI::MemoryPointer.new(:ulong)
+        expiry  = TimeStamp.new
+        outbuf  = SecBuffer.new.init
+        outbuf_sec = SecBufferDesc.new.init(outbuf)
 
         status = accept_security_context(
           @credentials,
           @context,
           inbuf_sec,
-          ASC_REQ_DELEGATE,
+          ASC_REQ_CONFIDENTIALITY,
           SECURITY_NATIVE_DREP,
           @context,
-          nil,
+          outbuf_sec,
           context_attr,
-          nil
+          expiry
         )
 
         if status != SEC_E_OK

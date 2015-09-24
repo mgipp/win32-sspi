@@ -126,7 +126,7 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
     assert_nil args[1], "unexpected ph_context"
     assert_kind_of Windows::Structs::SecBufferDesc, args[2], "unexpected p_input"
-    assert_equal Windows::Constants::ASC_REQ_DELEGATE, args[3], "unexpected f_contextreq"
+    assert_equal Windows::Constants::ASC_REQ_CONFIDENTIALITY, args[3], "unexpected f_contextreq"
     assert_equal Windows::Constants::SECURITY_NATIVE_DREP, args[4], "unexpected targetdatarep"
     assert_kind_of Windows::Structs::CtxtHandle, args[5], "unexpected ph_newcontext"
     assert_kind_of Windows::Structs::SecBufferDesc, args[6], "unexpected p_output"
@@ -165,12 +165,12 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
     assert_kind_of Windows::Structs::CtxtHandle, args[1], "unexpected ph_context"
     assert_kind_of Windows::Structs::SecBufferDesc, args[2], "unexpected p_input"
-    assert_equal Windows::Constants::ASC_REQ_DELEGATE, args[3], "unexpected f_contextreq"
+    assert_equal Windows::Constants::ASC_REQ_CONFIDENTIALITY, args[3], "unexpected f_contextreq"
     assert_equal Windows::Constants::SECURITY_NATIVE_DREP, args[4], "unexpected targetdatarep"
     assert_kind_of Windows::Structs::CtxtHandle, args[5], "unexpected ph_newcontext"
-    assert_nil args[6], "unexpected p_output"
+    assert_kind_of Windows::Structs::SecBufferDesc, args[6], "unexpected p_output"
     assert_kind_of FFI::MemoryPointer, args[7], "unexpected pf_contextattr"
-    assert_nil args[8], "unexpected pts_expiry"
+    assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
 
     # test query context attributes
     args = server.retrieve_state(:qca)
