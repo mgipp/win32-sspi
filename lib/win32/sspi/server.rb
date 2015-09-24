@@ -86,10 +86,9 @@ module Win32
           expiry
         )
 
-        #Fixme: There is a bug here if path is ever traversed ... output is not defined
         if status != SEC_E_OK
           if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
-            if complete_auth_token(@context, output) != SEC_E_OK
+            if complete_auth_token(@context, outbuf_sec) != SEC_E_OK
               raise SystemCallError.new('CompleteAuthToken', FFI.errno)
             end
           else

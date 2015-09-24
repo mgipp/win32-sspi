@@ -138,6 +138,20 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_nil args, "unexpected args complete_auth_token should not be called"
   end
   
+  test "capture bug in initial_token when accept_security_context returns complete needed" do
+    server = Class.new(MockServer) do
+      def accept_security_context(*args)
+        return Windows::Constants::SEC_I_COMPLETE_NEEDED
+      end
+      def complete_auth_token(*args)
+        return Windows::Constants::SEC_E_OK
+      end
+    end.new
+
+    @type1 = @client.initial_token(false)
+    assert_nothing_raised{ server.initial_token(@type1) }
+  end
+  
   test "complete_authentication invokes windows api as expected" do
     server = Class.new(MockServer).new
     @type1 = @client.initial_token
