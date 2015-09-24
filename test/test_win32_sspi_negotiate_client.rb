@@ -51,6 +51,11 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal 12, @client.method(:initialize_security_context).arity
   end
   
+  test "status_continue functionality" do
+    assert @client.status_continue?(Windows::Constants::SEC_I_CONTINUE_NEEDED)
+    refute @client.status_continue?(Windows::Constants::SEC_E_OK)
+  end
+  
   test "acquire_handle invokes windows api as expected" do
     client = Class.new(MockNegotiateClient).new(SPN)
     assert_nothing_raised{ client.acquire_handle }

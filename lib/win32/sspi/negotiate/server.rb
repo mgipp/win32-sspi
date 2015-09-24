@@ -19,10 +19,6 @@ module Win32
           @auth_type = "Negotiate"
         end
         
-        def status_continue(status)
-          SEC_I_CONTINUE_NEEDED == status
-        end
-      
         def acquire_handle
           return if @credentials_handle
         

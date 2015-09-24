@@ -11,7 +11,7 @@ class RubySSPIClient
     status,token = client.initialize_context
     
     Net::HTTP.start(uri.host, uri.port) do |http|
-      while client.status_continue(status)
+      while client.status_continue?(status)
         req = Net::HTTP::Get.new(uri.path)
         req['Authorization'] = "#{client.auth_type} #{Base64.strict_encode64(token)}"
         resp = http.request(req)

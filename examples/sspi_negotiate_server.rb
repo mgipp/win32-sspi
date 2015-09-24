@@ -44,7 +44,7 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
     token = Base64.strict_decode64(token)
     status, token = sspi_server.accept_context(token)
   
-    if sspi_server.status_continue(status)
+    if sspi_server.status_continue?(status)
       token = Base64.strict_encode64(token)
       resp['www-authenticate'] = "#{auth_type} #{token}"
       resp.status = 401
