@@ -42,23 +42,23 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
 
     auth_type, token = req['Authorization'].split(" ")
     token = Base64.strict_decode64(token)
-    status, token = sspi_server.accept_context(token)
+    status = sspi_server.accept_context(token)
   
     if sspi_server.status_continue?(status)
-      token = Base64.strict_encode64(token)
+      token = Base64.strict_encode64(sspi_server.token)
       resp['www-authenticate'] = "#{auth_type} #{token}"
       resp.status = 401
       return
     end
     
-    status, domain, username = sspi_server.query_attributes
-    resp['Remote-User'] = username
-    resp['Remote-User-Domain'] = domain
+    status = sspi_server.query_attributes
+    resp['Remote-User'] = sspi_server.username
+    resp['Remote-User-Domain'] = sspi_server.domain
     resp.status = 200
     resp['Content-Type'] = "text/plain"
-    resp.body = "#{Time.now}: Hello #{username} at #{domain}"
-    if token && token.length > 0
-      token = Base64.strict_encode64(token)
+    resp.body = "#{Time.now}: Hello #{sspi_server.username} at #{sspi_server.domain}"
+    if sspi_server.token && sspi_server.token.length > 0
+      token = Base64.strict_encode64(sspi_server.token)
       resp['www-authenticate'] = "#{auth_type} #{token}"
     end
     

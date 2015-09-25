@@ -12,9 +12,15 @@ module Win32
         include API::Server
       
         attr_accessor :auth_type
+        attr_reader :token
+        attr_reader :username
+        attr_reader :domain
       
         def initialize(options={})
           @auth_type = options[:auth_type] || "Negotiate"
+          @token = ""
+          @username = ''
+          @domain = ''
         end
         
         def acquire_handle
@@ -39,6 +45,8 @@ module Win32
             @credentials_handle = nil
             raise SystemCallError.new('AcquireCredentialsHandle', SecurityStatus.new(status))
           end
+          
+          status
         end
       
         def accept_context(token=nil)
@@ -82,9 +90,9 @@ module Win32
           end
 
           bsize = output_buffer[:cbBuffer]
-          token = output_buffer[:pvBuffer].read_string_length(bsize)
+          @token = output_buffer[:pvBuffer].read_string_length(bsize)
 
-          [status,token]
+          status
         end
 
         def query_attributes
@@ -100,7 +108,7 @@ module Win32
           user_string = ptr[:sUserName].read_string
 
           if user_string.include?("\\")
-            domain, username = user_string.split("\\")
+            @domain, @username = user_string.split("\\")
           end
 
           if @credentials_handle
@@ -110,7 +118,7 @@ module Win32
             end
           end
 
-          [status,domain,username]
+          status
         end
       
       end

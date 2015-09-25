@@ -22,7 +22,25 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal "Kerberos", server.auth_type
   end
 
-    test "acquire_handle basic functionality" do
+  test "token basic functionality" do
+    assert_respond_to(@server, :token)
+    assert_nothing_raised{ @server.token }
+    assert_kind_of(String, @server.token)
+    assert_equal "", @server.token
+  end
+
+  test "username and domain basic functionality" do
+    assert_respond_to(@server, :username)
+    assert_nothing_raised{ @server.username }
+    assert_kind_of(String, @server.username)
+    assert_equal "", @server.username
+    assert_respond_to(@server, :domain)
+    assert_nothing_raised{ @server.domain }
+    assert_kind_of(String, @server.domain)
+    assert_equal "", @server.domain
+  end
+
+  test "acquire_handle basic functionality" do
     assert_respond_to(@server, :acquire_handle)
     assert_equal 0, @server.method(:acquire_handle).arity
     assert_respond_to(@server, :acquire_credentials_handle)
@@ -49,7 +67,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
   
   test "acquire_handle invokes windows api as expected" do
     server = Class.new(MockNegotiateServer).new
-    assert_nothing_raised{ server.acquire_handle }
+    assert_nothing_raised{ @status = server.acquire_handle }
+    assert_equal Windows::Constants::SEC_E_OK, @status
     
     # test acquire_credentials_handle
     args = server.retrieve_state(:ach)
@@ -78,7 +97,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
   test "accept_context invokes windows api as expected" do
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ server.acquire_handle }
-    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ @status = server.accept_context(MockSpnegoToken) }
+    assert_equal Windows::Constants::SEC_E_OK, @status
 
     args = server.retrieve_state(:asc)
     assert_equal 9, args.length, "unexpected args"
@@ -115,7 +135,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     end.new
 
     assert_nothing_raised{ server.acquire_handle }
-    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ @status=server.accept_context(MockSpnegoToken) }
+    assert_equal Windows::Constants::SEC_E_OK, @status
 
     args = server.retrieve_state(:cat)
     assert_equal 2, args.length
@@ -146,7 +167,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
-    assert_nothing_raised{ @result = server.query_attributes }
+    assert_nothing_raised{ @status = server.query_attributes }
+    assert_equal Windows::Constants::SEC_E_OK, @status
 
     args = server.retrieve_state(:qca)
     assert_equal 3, args.length
@@ -154,7 +176,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal Windows::Constants::SECPKG_ATTR_NAMES, args[1], "unexpected ul_attribute"
     assert_kind_of Windows::Structs::SecPkgContext_Names, args[2], "unexpected p_buffer"
     
-    assert_equal [Windows::Constants::SEC_E_OK, "jimmy", "jes.local"], @result
+    assert_equal "jimmy", server.username
+    assert_equal "jes.local", server.domain
   end
   
   test "query_attributes raises when windows api returns failed status" do
@@ -207,7 +230,7 @@ class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   def query_context_attributes(*args)
     capture_state(:qca,args)
     ptr = args[2]
-    ptr[:sUserName] = FFI::MemoryPointer::from_string("jimmy\\jes.local")
+    ptr[:sUserName] = FFI::MemoryPointer::from_string("jes.local\\jimmy")
     return Windows::Constants::SEC_E_OK
   end
   
