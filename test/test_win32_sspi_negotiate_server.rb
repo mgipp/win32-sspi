@@ -13,24 +13,16 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
 
   test "auth_type basic functionality" do
     assert_respond_to(@server, :auth_type)
+    assert_respond_to(@server, :auth_type=)
     assert_nothing_raised{ @server.auth_type }
     assert_kind_of(String, @server.auth_type)
     assert_equal "Negotiate", @server.auth_type
+    
+    server = Win32::SSPI::Negotiate::Server.new(auth_type: "Kerberos")
+    assert_equal "Kerberos", server.auth_type
   end
 
-  test "credentials_handle basic functionality" do
-    assert_respond_to(@server, :credentials_handle)
-    assert_nothing_raised{ @server.credentials_handle }
-    assert_nil @server.credentials_handle
-  end
-
-  test "context_handle basic functionality" do
-    assert_respond_to(@server, :context_handle)
-    assert_nothing_raised{ @server.context_handle }
-    assert_nil @server.context_handle
-  end
-
-  test "acquire_handle basic functionality" do
+    test "acquire_handle basic functionality" do
     assert_respond_to(@server, :acquire_handle)
     assert_equal 0, @server.method(:acquire_handle).arity
     assert_respond_to(@server, :acquire_credentials_handle)

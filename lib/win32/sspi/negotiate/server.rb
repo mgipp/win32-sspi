@@ -11,12 +11,10 @@ module Win32
         include Windows::Structs
         include API::Server
       
-        attr_reader :auth_type
-        attr_reader :credentials_handle
-        attr_reader :context_handle
+        attr_accessor :auth_type
       
         def initialize(options={})
-          @auth_type = "Negotiate"
+          @auth_type = options[:auth_type] || "Negotiate"
         end
         
         def acquire_handle
