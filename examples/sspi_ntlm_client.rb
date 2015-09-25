@@ -1,7 +1,8 @@
 require 'pp'
 require 'base64'
 require 'net/http'
-require 'win32/sspi/ntlm/client'
+require 'win32-sspi'
+require 'ntlm/client'
 
 class RubySSPIClient
   def self.run

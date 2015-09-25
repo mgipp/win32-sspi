@@ -1,7 +1,8 @@
 # Attempting to setup an example authenticating server
 require 'base64'
 require 'webrick'
-require 'win32/sspi/ntlm/server'
+require 'win32-sspi'
+require 'ntlm/server'
 
 # A way to store state across multiple requests
 class StateStore
