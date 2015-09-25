@@ -72,6 +72,13 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
   end
   
+  test "acquire_handle memoizes handle" do
+    client = Class.new(MockNegotiateClient).new(SPN)
+    assert_nothing_raised{ client.acquire_handle }
+    assert_nothing_raised{ @status = client.acquire_handle }
+    assert_equal Windows::Constants::SEC_E_OK, @status
+  end
+  
   test "acquire_handle raises when windows api returns failed status" do
     client = Class.new(MockNegotiateClient) do
       def acquire_credentials_handle(*args)

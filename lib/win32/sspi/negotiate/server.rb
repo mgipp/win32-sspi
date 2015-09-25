@@ -24,7 +24,7 @@ module Win32
         end
         
         def acquire_handle
-          return if @credentials_handle
+          return SEC_E_OK if @credentials_handle
         
           @credentials_handle = CredHandle.new
           expiry = TimeStamp.new
