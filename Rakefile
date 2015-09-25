@@ -1,6 +1,8 @@
 require 'rake'
 require 'rake/clean'
 require 'rake/testtask'
+require 'rubygems'
+require 'rubygems/package'
 
 CLEAN.include('**/*.gem')
 
@@ -8,14 +10,13 @@ namespace :gem do
   desc "Create the win32-sspi gem"
   task :create => [:clean] do
     spec = eval(IO.read('win32-sspi.gemspec'))
-    Gem::Builder.new(spec).build
+    Gem::Package.build(spec)
   end
 
   desc "Install the win32-sspi gem"
   task :install => [:create] do
-    ruby 'win32-sspi.gemspec'
     file = Dir["*.gem"].first
-    sh "gem install #{file}"
+    sh "gem install #{file} -l --no-document"
   end
 end
 
