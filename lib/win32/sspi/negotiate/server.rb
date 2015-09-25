@@ -23,6 +23,14 @@ module Win32
           @domain = ''
         end
         
+        def authenticate_and_continue?(token)
+          status = acquire_handle
+          if SEC_E_OK == status
+            status = accept_context(token)
+          end
+          status_continue?(status)
+        end
+        
         def acquire_handle
           return SEC_E_OK if @credentials_handle
         

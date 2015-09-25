@@ -35,16 +35,12 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
       resp.status = 401
       return
     end
-    
-    # since a new instance of the server is created for each request
-    sspi_server = StateStore.retrieve_server
-    sspi_server.acquire_handle
 
     auth_type, token = req['Authorization'].split(" ")
     token = Base64.strict_decode64(token)
-    status = sspi_server.accept_context(token)
-  
-    if sspi_server.status_continue?(status)
+
+    sspi_server = StateStore.retrieve_server
+    if sspi_server.authenticate_and_continue?(token)
       token = Base64.strict_encode64(sspi_server.token)
       resp['www-authenticate'] = "#{auth_type} #{token}"
       resp.status = 401

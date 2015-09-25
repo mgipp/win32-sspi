@@ -64,6 +64,11 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_respond_to(@server, :free_credentials_handle)
     assert_equal 1, @server.method(:free_credentials_handle).arity
   end
+
+  test "authenticate_and_continue basic functionality" do
+    assert_respond_to(@server, :authenticate_and_continue?)
+    assert_equal 1, @server.method(:authenticate_and_continue?).arity
+  end
   
   test "acquire_handle invokes windows api as expected" do
     server = Class.new(MockNegotiateServer).new

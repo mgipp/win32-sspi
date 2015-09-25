@@ -48,6 +48,11 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_respond_to(@client, :initialize_security_context)
     assert_equal 12, @client.method(:initialize_security_context).arity
   end
+
+  test "authenticate_and_continue basic functionality" do
+    assert_respond_to(@client, :authenticate_and_continue?)
+    assert_equal 1, @client.method(:authenticate_and_continue?).arity
+  end
   
   test "status_continue functionality" do
     assert @client.status_continue?(Windows::Constants::SEC_I_CONTINUE_NEEDED)
