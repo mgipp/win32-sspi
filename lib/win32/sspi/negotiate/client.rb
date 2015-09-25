@@ -13,12 +13,10 @@ module Win32
       
         attr_reader :spn
         attr_reader :auth_type
-        attr_reader :context_handle
-        attr_reader :credentials_handle
       
         def initialize(spn,options={})
           @spn = spn
-          @auth_type = "Negotiate"
+          @auth_type = options[:auth_type] || "Negotiate"
         end
         
         def acquire_handle

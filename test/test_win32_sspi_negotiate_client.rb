@@ -23,18 +23,9 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nothing_raised{ @client.auth_type }
     assert_kind_of(String, @client.auth_type)
     assert_equal "Negotiate", @client.auth_type
-  end
-
-  test "credentials_handle basic functionality" do
-    assert_respond_to(@client, :credentials_handle)
-    assert_nothing_raised{ @client.credentials_handle }
-    assert_nil @client.credentials_handle
-  end
-
-  test "context_handle basic functionality" do
-    assert_respond_to(@client, :context_handle)
-    assert_nothing_raised{ @client.context_handle }
-    assert_nil @client.context_handle
+    
+    client = Win32::SSPI::Negotiate::Client.new(SPN, auth_type:"Kerberos")
+    assert_equal "Kerberos", client.auth_type
   end
 
   test "acquire_handle basic functionality" do
