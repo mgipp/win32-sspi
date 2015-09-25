@@ -49,7 +49,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
 
   test "accept_context basic functionality" do
     assert_respond_to(@server, :accept_context)
-    assert_equal -1, @server.method(:accept_context).arity
+    assert_equal( -1, @server.method(:accept_context).arity)
     assert_respond_to(@server, :accept_security_context)
     assert_equal 9, @server.method(:accept_security_context).arity
     assert_respond_to(@server, :complete_auth_token)

@@ -19,6 +19,8 @@ module Win32
           @spn = spn
           @auth_type = options[:auth_type] || "Negotiate"
           @token = ""
+          @credentials_handle = nil
+          @context_handle = nil
         end
         
         def authenticate_and_continue?(token)

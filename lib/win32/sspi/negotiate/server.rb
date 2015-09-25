@@ -21,6 +21,8 @@ module Win32
           @token = ""
           @username = ''
           @domain = ''
+          @credentials_handle = nil
+          @context_handle = nil
         end
         
         def authenticate_and_continue?(token)

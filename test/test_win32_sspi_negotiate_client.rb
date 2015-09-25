@@ -44,7 +44,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
 
   test "initialize_context basic functionality" do
     assert_respond_to(@client, :initialize_context)
-    assert_equal -1, @client.method(:initialize_context).arity
+    assert_equal( -1, @client.method(:initialize_context).arity)
     assert_respond_to(@client, :initialize_security_context)
     assert_equal 12, @client.method(:initialize_security_context).arity
   end
