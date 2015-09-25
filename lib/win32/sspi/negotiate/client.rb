@@ -13,14 +13,16 @@ module Win32
       
         attr_reader :spn
         attr_reader :auth_type
+        attr_reader :token
       
         def initialize(spn,options={})
           @spn = spn
           @auth_type = options[:auth_type] || "Negotiate"
+          @token = ""
         end
         
         def acquire_handle
-          return if @credentials_handle
+          return SEC_E_OK if @credentials_handle
         
           @credentials_handle = CredHandle.new
           expiry = TimeStamp.new
@@ -41,6 +43,8 @@ module Win32
             @credentials_handle = nil
             raise SystemCallError.new('AcquireCredentialsHandle', SecurityStatus.new(status))
           end
+          
+          status
         end
       
         def initialize_context(token=nil)
@@ -78,12 +82,12 @@ module Win32
             raise SystemCallError.new('InitializeSecurityContext', SecurityStatus.new(status))
           else
             bsize = output_buffer[:cbBuffer]
-            token = output_buffer[:pvBuffer].read_string_length(bsize)
+            @token = output_buffer[:pvBuffer].read_string_length(bsize)
           end
         
           @context_handle = context
 
-          return [status, token]
+          status
         end
       end
     end

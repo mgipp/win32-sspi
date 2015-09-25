@@ -28,6 +28,13 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal "Kerberos", client.auth_type
   end
 
+  test "token basic functionality" do
+    assert_respond_to(@client, :token)
+    assert_nothing_raised{ @client.token }
+    assert_kind_of(String, @client.token)
+    assert_equal "", @client.token
+  end
+
   test "acquire_handle basic functionality" do
     assert_respond_to(@client, :acquire_handle)
     assert_equal 0, @client.method(:acquire_handle).arity
@@ -49,9 +56,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   
   test "acquire_handle invokes windows api as expected" do
     client = Class.new(MockNegotiateClient).new(SPN)
-    assert_nothing_raised{ client.acquire_handle }
+    assert_nothing_raised{ @status = client.acquire_handle }
+    assert_equal Windows::Constants::SEC_E_OK, @status
+
     args = client.retrieve_state(:acquire)
-    
     assert_equal 9, args.length, "acquire_credentials_handle should have 9 arguments"
     assert_equal SPN, args[0], "unexpected psz_principal"
     assert_equal 'Negotiate', args[1], "unexpected psz_package"
@@ -78,9 +86,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   test "initialize_context invokes windows api as expected" do
     client = Class.new(MockNegotiateClient).new(SPN)
     assert_nothing_raised{ client.acquire_handle }
-    assert_nothing_raised{ client.initialize_context }
+    assert_nothing_raised{ @status = client.initialize_context }
+    assert_equal Windows::Constants::SEC_I_CONTINUE_NEEDED, @status
+
     args = client.retrieve_state(:isc)
-    
     assert_equal 12, args.length, "unexpected arguments"
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
     assert_nil args[1], "unexpected ph_context"

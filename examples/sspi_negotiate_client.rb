@@ -8,18 +8,18 @@ class RubySSPIClient
     uri = URI.parse(url)
     client = Win32::SSPI::Negotiate::Client.new("HTTP/#{uri.host}")
     client.acquire_handle
-    status,token = client.initialize_context
+    status = client.initialize_context
     
     Net::HTTP.start(uri.host, uri.port) do |http|
       while client.status_continue?(status)
         req = Net::HTTP::Get.new(uri.path)
-        req['Authorization'] = "#{client.auth_type} #{Base64.strict_encode64(token)}"
+        req['Authorization'] = "#{client.auth_type} #{Base64.strict_encode64(client.token)}"
         resp = http.request(req)
         header = resp['www-authenticate']
         if header
           auth_type, token = header.split(' ')
           token = Base64.strict_decode64(token)
-          status,token = client.initialize_context(token)
+          status = client.initialize_context(token)
         end
       end
       
