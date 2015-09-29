@@ -5,7 +5,7 @@ require 'test-unit'
 require 'win32/sspi/negotiate/client'
 
 class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
-  SPN = "HTTP/virtual-pc-serv.bpa.local"
+  SPN = "HTTP/virtual-server.gas.local"
 
   def setup
     @client = Win32::SSPI::Negotiate::Client.new(SPN)
@@ -15,7 +15,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_respond_to(@client, :spn)
     assert_nothing_raised{ @client.spn }
     assert_kind_of(String, @client.spn)
-    assert_equal "HTTP/virtual-pc-serv.bpa.local", @client.spn
+    assert_equal "HTTP/virtual-server.gas.local", @client.spn
   end
 
   test "auth_type basic functionality" do
