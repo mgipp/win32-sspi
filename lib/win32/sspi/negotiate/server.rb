@@ -67,6 +67,8 @@ module Win32
             input_buffer   = SecBuffer.new.init(token)
             input_buffer_desc  = SecBufferDesc.new.init(input_buffer)
           end
+          
+          rflags = ASC_REQ_CONFIDENTIALITY | ASC_REQ_REPLAY_DETECT | ASC_REQ_CONNECTION
 
           output_buffer  = SecBuffer.new.init
           output_buffer_desc = SecBufferDesc.new.init(output_buffer)
@@ -78,7 +80,7 @@ module Win32
             @credentials_handle,
             ctx,
             (token ? input_buffer_desc : nil),
-            ASC_REQ_DELEGATE,
+            rflags,
             SECURITY_NATIVE_DREP,
             @context_handle,
             output_buffer_desc,

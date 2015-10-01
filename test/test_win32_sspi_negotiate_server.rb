@@ -117,7 +117,10 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
     assert_nil args[1], "unexpected ph_context"
     assert_kind_of Windows::Structs::SecBufferDesc, args[2], "unexpected p_input"
-    assert_equal Windows::Constants::ASC_REQ_DELEGATE, args[3], "unexpected f_contextreq"
+    rflags = Windows::Constants::ASC_REQ_CONFIDENTIALITY | 
+              Windows::Constants::ASC_REQ_REPLAY_DETECT | 
+              Windows::Constants::ASC_REQ_CONNECTION
+    assert_equal rflags, args[3], "unexpected f_contextreq"
     assert_equal Windows::Constants::SECURITY_NATIVE_DREP, args[4], "unexpected targetdatarep"
     assert_kind_of Windows::Structs::CtxtHandle, args[5], "unexpected ph_newcontext"
     assert_kind_of Windows::Structs::SecBufferDesc, args[6], "unexpected p_output"
