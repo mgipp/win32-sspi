@@ -42,6 +42,16 @@ module Win32
           result
         end
         
+        def create_ctxhandle(lower=nil,upper=nil)
+          result = CtxtHandle.new
+          
+          if lower && upper
+            result.marshal_load([lower,upper])
+          end
+          
+          result
+        end
+        
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           status = AcquireCredentialsHandle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           return status

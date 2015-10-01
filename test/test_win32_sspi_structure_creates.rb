@@ -26,4 +26,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal [777,888], h_credential.marshal_dump
   end
   
+  def test_create_ctxhandle
+    h_ctx = create_ctxhandle(777,888)
+    assert_equal 777, h_ctx[:dwLower].read_ulong
+    assert_equal 888, h_ctx[:dwUpper].read_ulong
+    assert_equal [777,888], h_ctx.marshal_dump
+  end
 end
