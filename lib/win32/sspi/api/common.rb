@@ -52,6 +52,15 @@ module Win32
           result
         end
         
+        def create_timestamp(low=nil,high=nil)
+          ts = TimeStamp.new
+          if low && high
+            ts[:dwLowDateTime] = low
+            ts[:dwHighDateTime] = high
+          end
+          ts
+        end
+        
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           status = AcquireCredentialsHandle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           return status

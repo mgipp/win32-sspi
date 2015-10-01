@@ -32,4 +32,11 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal 888, h_ctx[:dwUpper].read_ulong
     assert_equal [777,888], h_ctx.marshal_dump
   end
+
+  def test_create_timestamp
+    ts = create_timestamp(0xFFAA8811,0x00000044)
+    assert_equal 0xFFAA8811, ts[:dwLowDateTime]
+    assert_equal 0x00000044, ts[:dwHighDateTime]
+  end
+
 end
