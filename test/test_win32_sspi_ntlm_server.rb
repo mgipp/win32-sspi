@@ -13,82 +13,82 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     @type2 = nil
   end
 
-  test "auth_type basic functionality" do
+  def test_auth_type_basic_functionality
     assert_respond_to(@server, :auth_type)
     assert_nothing_raised{ @server.auth_type }
     assert_kind_of(String, @server.auth_type)
   end
 
-  test "auth_type defaults to NTLM" do
+  def test_auth_type_defaults_to_NTLM
     assert_equal('NTLM', @server.auth_type)
   end
 
-  test "type_1_message basic functionality" do
+  def test_type_1_message_basic_functionality
     assert_respond_to(@server, :type_1_message)
     assert_nothing_raised{ @server.type_1_message }
   end
 
-  test "type_1_message is initially nil" do
+  def test_type_1_message_is_initially_nil
     assert_nil(@server.type_1_message)
   end
 
-  test "type_2_message basic functionality" do
+  def test_type_2_message_basic_functionality
     assert_respond_to(@server, :type_2_message)
     assert_nothing_raised{ @server.type_2_message }
   end
 
-  test "type_2_message is initially nil" do
+  def test_type_2_message_is_initially_nil
     assert_nil(@server.type_2_message)
   end
 
-  test "username basic functionality" do
+  def test_username_basic_functionality
     assert_respond_to(@server, :username)
     assert_nothing_raised{ @server.username }
   end
 
-  test "username is initially nil" do
+  def test_username_is_initially_nil
     assert_nil(@server.username)
   end
 
-  test "domain basic functionality" do
+  def test_domain_basic_functionality
     assert_respond_to(@server, :domain)
     assert_nothing_raised{ @server.domain }
   end
 
-  test "domain is initially nil" do
+  def test_domain_is_initially_nil
     assert_nil(@server.domain)
   end
 
-  test "initial_token basic functionality" do
+  def test_initial_token_basic_functionality
     assert_respond_to(@server, :initial_token)
   end
 
-  test "initial_token accepts a type 1 message and returns a type 2 message" do
+  def test_initial_token_accepts_a_type_1_message_and_returns_a_type_2_message
     @type1 = @client.initial_token
     assert_nothing_raised{ @type2 = @server.initial_token(@type1) }
     assert_kind_of(String, @type2)
     assert_true(@type2.size > 10)
   end
 
-  test "the type_1_message accessor is set after initial_token is called" do
+  def test_the_type_1_message_accessor_is_set_after_initial_token_is_called
     @type1 = @client.initial_token
     @server.initial_token(@type1)
     assert_not_nil(@server.type_1_message)
     assert_kind_of(String, @server.type_1_message)
   end
 
-  test "the type_2_message accessor is set after initial_token is called" do
+  def test_the_type_2_message_accessor_is_set_after_initial_token_is_called
     @type1 = @client.initial_token
     @server.initial_token(@type1)
     assert_not_nil(@server.type_2_message)
     assert_kind_of(String, @server.type_2_message)
   end
 
-  test "complete_authentication basic functionality" do
+  def test_complete_authentication_basic_functionality
     assert_respond_to(@server, :complete_authentication)
   end
 
-  test "complete_authentication accepts a type 3 message and returns a status" do
+  def test_complete_authentication_accepts_a_type_3_message_and_returns_a_status
     @type1 = @client.initial_token
     @type2 = @server.initial_token(@type1)
     @type3 = @client.complete_authentication(@type2)
@@ -98,11 +98,11 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_kind_of(Numeric, result)
   end
 
-  test "complete_authentication raises an error if a bogus token is passed" do
+  def test_complete_authentication_raises_an_error_if_a_bogus_token_is_passed
     assert_raise(Errno::EINVAL){ @server.complete_authentication('foo') }
   end
   
-  test "initial_token invokes windows api as expected" do
+  def test_initial_token_invokes_windows_api_as_expected
     server = Class.new(MockServer).new
     @type1 = @client.initial_token(false)
     @type2 = server.initial_token(@type1)
@@ -138,7 +138,7 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_nil args, "unexpected args complete_auth_token should not be called"
   end
   
-  test "capture bug in initial_token when accept_security_context returns complete needed" do
+  def test_capture_bug_in_initial_token_when_accept_security_context_returns_complete_needed
     server = Class.new(MockServer) do
       def accept_security_context(*args)
         return Windows::Constants::SEC_I_COMPLETE_NEEDED
@@ -152,7 +152,7 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
     assert_nothing_raised{ server.initial_token(@type1) }
   end
   
-  test "complete_authentication invokes windows api as expected" do
+  def test_complete_authentication_invokes_windows_api_as_expected
     server = Class.new(MockServer).new
     @type1 = @client.initial_token
     @type2 = server.initial_token(@type1)

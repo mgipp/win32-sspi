@@ -11,7 +11,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     @server = Win32::SSPI::Negotiate::Server.new
   end
 
-  test "auth_type basic functionality" do
+  def test_auth_type_basic_functionality
     assert_respond_to(@server, :auth_type)
     assert_respond_to(@server, :auth_type=)
     assert_nothing_raised{ @server.auth_type }
@@ -22,14 +22,14 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal "Kerberos", server.auth_type
   end
 
-  test "token basic functionality" do
+  def test_token_basic_functionality
     assert_respond_to(@server, :token)
     assert_nothing_raised{ @server.token }
     assert_kind_of(String, @server.token)
     assert_equal "", @server.token
   end
 
-  test "username and domain basic functionality" do
+  def test_username_and_domain_basic_functionality
     assert_respond_to(@server, :username)
     assert_nothing_raised{ @server.username }
     assert_kind_of(String, @server.username)
@@ -40,14 +40,14 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal "", @server.domain
   end
 
-  test "acquire_handle basic functionality" do
+  def test_acquire_handle_basic_functionality
     assert_respond_to(@server, :acquire_handle)
     assert_equal 0, @server.method(:acquire_handle).arity
     assert_respond_to(@server, :acquire_credentials_handle)
     assert_equal 9, @server.method(:acquire_credentials_handle).arity
   end
 
-  test "accept_context basic functionality" do
+  def test_accept_context_basic_functionality
     assert_respond_to(@server, :accept_context)
     assert_equal( -1, @server.method(:accept_context).arity)
     assert_respond_to(@server, :accept_security_context)
@@ -56,7 +56,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal 2, @server.method(:complete_auth_token).arity
   end
 
-  test "query_attributes basic functionality" do
+  def test_query_attributes_basic_functionality
     assert_respond_to(@server, :query_attributes)
     assert_equal 0, @server.method(:query_attributes).arity
     assert_respond_to(@server, :query_context_attributes)
@@ -65,12 +65,12 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal 1, @server.method(:free_credentials_handle).arity
   end
 
-  test "authenticate_and_continue basic functionality" do
+  def test_authenticate_and_continue_basic_functionality
     assert_respond_to(@server, :authenticate_and_continue?)
     assert_equal 1, @server.method(:authenticate_and_continue?).arity
   end
   
-  test "acquire_handle invokes windows api as expected" do
+  def test_acquire_handle_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ @status = server.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
@@ -89,14 +89,14 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
   end
   
-  test "acquire_handle memoizes handle" do
+  def test_acquire_handle_memoizes_handle
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ @status = server.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
   end
   
-  test "acquire_handle raises when windows api returns failed status" do
+  def test_acquire_handle_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def acquire_credentials_handle(*args)
         capture_state(:ach, args)
@@ -106,7 +106,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(Errno::EINVAL){ server.acquire_handle }
   end
   
-  test "accept_context invokes windows api as expected" do
+  def test_accept_context_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ @status = server.accept_context(MockSpnegoToken) }
@@ -128,7 +128,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
   end
   
-  test "accept_context raises when windows api returns failed status" do
+  def test_accept_context_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
         capture_state(:asc, args)
@@ -138,7 +138,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(Errno::EINVAL){ server.accept_context }
   end
   
-  test "complet_auth invokes windows api as expected" do
+  def test_complet_auth_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
         capture_state(:asc, args)
@@ -159,7 +159,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_kind_of Windows::Structs::SecBufferDesc, args[1], "unexpected p_output"
   end
   
-  test "complet_auth raises when windows api returns failed status" do
+  def test_complet_auth_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
         capture_state(:asc, args)
@@ -178,7 +178,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(Errno::EINVAL){ server.accept_context(MockSpnegoToken) }
   end
   
-  test "query_attributes invokes windows api as expected" do
+  def test_query_attributes_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
@@ -195,7 +195,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal "jes.local", server.domain
   end
   
-  test "query_attributes raises when windows api returns failed status" do
+  def test_query_attributes_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def query_context_attributes(*args)
         capture_state(:asc, args)
@@ -205,7 +205,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(Errno::EINVAL){ server.query_attributes }
   end
   
-  test "query_attributes raises when free_handle returns failed status" do
+  def test_query_attributes_raises_when_free_handle_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def free_credentials_handle(*args)
         capture_state(:fch,args)

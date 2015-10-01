@@ -11,14 +11,14 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     @client = Win32::SSPI::Negotiate::Client.new(SPN)
   end
 
-  test "spn basic functionality" do
+  def test_spn_basic_functionality
     assert_respond_to(@client, :spn)
     assert_nothing_raised{ @client.spn }
     assert_kind_of(String, @client.spn)
     assert_equal "HTTP/virtual-server.gas.local", @client.spn
   end
 
-  test "auth_type basic functionality" do
+  def test_auth_type_basic_functionality
     assert_respond_to(@client, :auth_type)
     assert_nothing_raised{ @client.auth_type }
     assert_kind_of(String, @client.auth_type)
@@ -28,38 +28,38 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal "Kerberos", client.auth_type
   end
 
-  test "token basic functionality" do
+  def test_token_basic_functionality
     assert_respond_to(@client, :token)
     assert_nothing_raised{ @client.token }
     assert_kind_of(String, @client.token)
     assert_equal "", @client.token
   end
 
-  test "acquire_handle basic functionality" do
+  def test_acquire_handle_basic_functionality
     assert_respond_to(@client, :acquire_handle)
     assert_equal 0, @client.method(:acquire_handle).arity
     assert_respond_to(@client, :acquire_credentials_handle)
     assert_equal 9, @client.method(:acquire_credentials_handle).arity
   end
 
-  test "initialize_context basic functionality" do
+  def test_initialize_context_basic_functionality
     assert_respond_to(@client, :initialize_context)
     assert_equal( -1, @client.method(:initialize_context).arity)
     assert_respond_to(@client, :initialize_security_context)
     assert_equal 12, @client.method(:initialize_security_context).arity
   end
 
-  test "authenticate_and_continue basic functionality" do
+  def test_authenticate_and_continue_basic_functionality
     assert_respond_to(@client, :authenticate_and_continue?)
     assert_equal 1, @client.method(:authenticate_and_continue?).arity
   end
   
-  test "status_continue functionality" do
+  def test_status_continue_functionality
     assert @client.status_continue?(Windows::Constants::SEC_I_CONTINUE_NEEDED)
     refute @client.status_continue?(Windows::Constants::SEC_E_OK)
   end
   
-  test "acquire_handle invokes windows api as expected" do
+  def test_acquire_handle_invokes_windows_api_as_expected
     client = Class.new(MockNegotiateClient).new(SPN)
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
@@ -77,14 +77,14 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
   end
   
-  test "acquire_handle memoizes handle" do
+  def test_acquire_handle_memoizes_handle
     client = Class.new(MockNegotiateClient).new(SPN)
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
   end
   
-  test "acquire_handle raises when windows api returns failed status" do
+  def test_acquire_handle_raises_when_windows_api_returns_failed_status
     client = Class.new(MockNegotiateClient) do
       def acquire_credentials_handle(*args)
         capture_state(:acquire, args)
@@ -95,7 +95,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_raises(Errno::EINVAL){ client.acquire_handle }
   end
   
-  test "initialize_context invokes windows api as expected" do
+  def test_initialize_context_invokes_windows_api_as_expected
     client = Class.new(MockNegotiateClient).new(SPN)
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ @status = client.initialize_context }
@@ -121,7 +121,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_kind_of Windows::Structs::TimeStamp, args[11], "unexpected pts_expiry"
   end
   
-  test "initialize_context raises when windows api returns failed status" do
+  def test_initialize_context_raises_when_windows_api_returns_failed_status
     client = Class.new(MockNegotiateClient) do
       def initialize_security_context(*args)
         capture_state(:isc, args)
