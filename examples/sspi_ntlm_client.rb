@@ -5,14 +5,14 @@ require 'win32-sspi'
 require 'ntlm/client'
 
 class RubySSPIClient
-  def self.run
+  def self.run(url)
     client = Win32::SSPI::NTLM::Client.new
     msg = client.initial_token
     type_1_msg = Base64.strict_encode64(msg)
     puts "Generated type 1 message: #{type_1_msg}"
     puts "*" * 60
 
-    uri = URI.parse("http://localhost:3005")
+    uri = URI.parse(url)
     Net::HTTP.start(uri.host, uri.port) do |http|
       req = Net::HTTP::Get.new('/test')
       req['Authorization'] = "NTLM #{type_1_msg}"
@@ -41,5 +41,10 @@ class RubySSPIClient
 end
 
 if __FILE__ == $0
-  RubySSPIClient.run
+  if ARGV.length < 1
+    puts "usage: ruby sspi_ntlm_client.rb url"
+    exit(0)
+  end
+
+  RubySSPIClient.run(ARGV[0])
 end

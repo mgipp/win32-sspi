@@ -73,7 +73,7 @@ end
 
 if $0 == __FILE__
   if ARGV.length < 1
-    puts "usage: ruby -Ilib examples/sspi_negotiate_server.rb url"
+    puts "usage: ruby sspi_negotiate_server.rb url"
     puts "where: url = http://hostname:port/path"
     exit(0)
   end

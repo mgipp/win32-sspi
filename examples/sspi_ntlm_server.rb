@@ -76,14 +76,20 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
     end
   end
 
-  def self.run
-    s = WEBrick::HTTPServer.new( :Binding=>'localhost', :Port=>3005)
-    s.mount('/test', RubySSPIServlet)
+  def self.run(url)
+    uri = URI.parse(url)
+    s = WEBrick::HTTPServer.new( :Binding=>uri.host, :Port=>uri.port)
+    s.mount(uri.path, RubySSPIServlet)
     trap("INT") { s.shutdown }
     s.start
   end
 end
 
 if $0 == __FILE__
-  RubySSPIServlet.run
+  if ARGV.length < 1
+    puts "usage ruby sspi_ntlm_server.rb url"
+    exit(0)
+  end
+  
+  RubySSPIServlet.run(ARGV[0])
 end
