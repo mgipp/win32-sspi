@@ -26,10 +26,10 @@ module Windows
       end
 
       def marshal_load(values)
-        lptr = FFI::MemoryPointer.new(:ulong)
-        hptr = FFI::MemoryPointer.new(:ulong)
-        lptr.write_ulong(values[0])
-        hptr.write_ulong(values[1])
+        self[:dwLower] = FFI::MemoryPointer.new(:ulong)
+        self[:dwUpper] = FFI::MemoryPointer.new(:ulong)
+        self[:dwLower].write_ulong(values[0])
+        self[:dwUpper].write_ulong(values[1])
       end
     end
 

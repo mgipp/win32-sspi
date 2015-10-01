@@ -31,28 +31,16 @@ module Win32
           
           auth_struct
         end
-=begin  
-        def create_credhandle
+
+        def create_credhandle(lower=nil,upper=nil)
+          result = CredHandle.new
+          
+          if lower && upper
+            result.marshal_load([lower,upper])
+          end
+          
+          result
         end
-  
-        def create_ctxhandle
-        end
-  
-        def create_timestamp
-        end
-  
-        def create_secbuffer
-        end
-  
-        def create_secbufferdesc
-        end
-  
-        def create_secpkginfo
-        end
-  
-        def create_secpkgcontext_names
-        end
-=end
         
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           status = AcquireCredentialsHandle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)

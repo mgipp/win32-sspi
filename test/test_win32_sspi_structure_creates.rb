@@ -19,26 +19,11 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal SEC_WINNT_AUTH_IDENTITY_ANSI, identity[:Flags]
   end
   
-=begin
   def test_create_credhandle
+    h_credential = create_credhandle(777,888)
+    assert_equal 777, h_credential[:dwLower].read_ulong
+    assert_equal 888, h_credential[:dwUpper].read_ulong
+    assert_equal [777,888], h_credential.marshal_dump
   end
   
-  def test_create_ctxhandle
-  end
-  
-  def test_create_timestamp
-  end
-  
-  def test_create_secbuffer
-  end
-  
-  def test_create_secbufferdesc
-  end
-  
-  def test_create_secpkginfo
-  end
-  
-  def test_create_secpkgcontext_names
-  end
-=end
 end
