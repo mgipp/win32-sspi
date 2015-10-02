@@ -13,7 +13,7 @@ module Windows
     SEC_WINNT_AUTH_IDENTITY_UNICODE = 2
     SECBUFFER_TOKEN                 = 2
     SECBUFFER_VERSION               = 0
-    TOKENBUFSIZE                    = 1024
+    TOKENBUFSIZE                    = 4096
 
     SECPKG_CRED_INBOUND              = 0x00000001
     SECPKG_CRED_OUTBOUND             = 0x00000002

@@ -39,4 +39,16 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal 0x00000044, ts[:dwHighDateTime]
   end
 
+  def test_create_secbuffer
+    content = "test content"
+    buffer = create_secbuffer(content)
+    assert_equal content, buffer[:pvBuffer].read_string
+    assert_equal content.length, buffer[:cbBuffer]
+    assert_equal SECBUFFER_TOKEN, buffer[:BufferType]
+    
+    buffer = create_secbuffer
+    assert_not_nil buffer[:pvBuffer]
+    assert_equal TOKENBUFSIZE, buffer[:cbBuffer]
+    assert_equal SECBUFFER_TOKEN, buffer[:BufferType]
+  end
 end
