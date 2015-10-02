@@ -234,16 +234,10 @@ end
 
 class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   def acquire_credentials_handle(*args)
-    s_args = retrieve_state(:ach)
-    if s_args
-      s_args = [s_args]
-      s_args << args
-      capture_state(:ach, s_args)
-    else
-      capture_state(:ach,args)
-    end
-    # this api should return a credential handle in arg[7]
-    # and a timestamp in arg[8]
+    s_args = retrieve_state(:ach) || Array.new
+    s_args << args
+    capture_state(:ach,s_args.flatten)
+    # this api should return a credential handle in arg[7] and a timestamp in arg[8]
     args[7].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockCredentialHandle)
     args[8].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockTimeStamp)
     return Windows::Constants::SEC_E_OK
