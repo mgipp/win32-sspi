@@ -38,6 +38,15 @@ module Windows
 
     class TimeStamp < FFI::Struct
       layout(:dwLowDateTime, :ulong, :dwHighDateTime, :ulong)
+      
+      def marshal_dump
+        [self[:dwLowDateTime], self[:dwHighDateTime]]
+      end
+
+      def marshal_load(values)
+        self[:dwLowDateTime] = values[0]
+        self[:dwHighDateTime] = values[1]
+      end
     end
 
     class SecBuffer < FFI::Struct
@@ -79,6 +88,17 @@ module Windows
         self[:cBuffers]  = 1
         self[:pBuffers]  = sec_buffer
         self
+      end
+      
+      def marshal_dump
+        buffer = SecBuffer.new(self[:pBuffers])
+        buffer.to_ruby_s
+      end
+      
+      def marshal_load(content)
+        buffer = SecBuffer.new(self[:pBuffers])
+        buffer[:cbBuffer] = content.length
+        buffer[:pvBuffer].write_string(content)
       end
     end
 
