@@ -88,11 +88,22 @@ module Win32
 
           if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
             raise SecurityStatusError.new('InitializeSecurityContext', status, FFI.errno)
-          else
-            @token = output_buffer.to_ruby_s
           end
         
-          @context_handle = context
+          @token = output_buffer.to_ruby_s
+          @context_handle ||= context
+
+          if SEC_E_OK == status # we are done .. free up handles
+            status, @context_handle = [delete_security_context(@context_handle),nil]
+            if SEC_E_OK != status
+              raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
+            end
+            
+            status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
+            if SEC_E_OK != status
+              raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
+            end
+          end
 
           status
         end

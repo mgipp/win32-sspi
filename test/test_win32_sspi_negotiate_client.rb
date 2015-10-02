@@ -144,6 +144,33 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nothing_raised{ client.acquire_handle }
     assert_raises(SecurityStatusError){ client.initialize_context }
   end
+  
+  def test_authenticate_and_continue
+    client = Class.new(MockNegotiateClient).new(SPN)
+    counter = 0
+    token = nil
+    while client.authenticate_and_continue?(token)
+      token = client.token
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+    end
+
+    acquire_args = client.retrieve_state(:acquire)
+    refute_nil acquire_args
+    assert_equal 9, acquire_args.length
+    
+    isc_args = client.retrieve_state(:isc)
+    refute_nil isc_args
+    assert_equal 12, isc_args.length
+    
+    dsc_args = client.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = client.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+  end
 
   def teardown
     @client = nil
@@ -163,12 +190,14 @@ class MockNegotiateClient < Win32::SSPI::Negotiate::Client
   
   def initialize_security_context(*args)
     capture_state(:isc, args)
+    status = Windows::Constants::SEC_E_OK
+    status = Windows::Constants::SEC_I_CONTINUE_NEEDED if args[6].nil?
     # this api should return a new context, p_output, context attr and timestamp
     args[8].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockContextHandle)
     args[9].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockSecBufferContent)
     args[10].write_ulong(TC_Win32_SSPI_Negotiate_Client::ContextAttr)
     args[11].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockTimeStamp)
-    return Windows::Constants::SEC_I_CONTINUE_NEEDED
+    return status
   end
   
   def delete_security_context(*args)
