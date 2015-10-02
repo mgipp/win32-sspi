@@ -70,7 +70,7 @@ module Windows
       )
 
       def init(sec_buffer)
-        self[:ulVersion] = 0 # SECBUFFER_VERSION
+        self[:ulVersion] = Windows::Constants::SECBUFFER_VERSION
         self[:cBuffers]  = 1
         self[:pBuffers]  = sec_buffer
         self

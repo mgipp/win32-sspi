@@ -65,6 +65,10 @@ module Win32
           SecBuffer.new.init(content)
         end
         
+        def create_secbufferdesc(sec_buffer=nil)
+          SecBufferDesc.new.init(sec_buffer)
+        end
+        
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           status = AcquireCredentialsHandle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           return status

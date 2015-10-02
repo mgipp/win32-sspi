@@ -51,4 +51,13 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal TOKENBUFSIZE, buffer[:cbBuffer]
     assert_equal SECBUFFER_TOKEN, buffer[:BufferType]
   end
+
+  def test_create_secbufferdesc
+    content = "test content"
+    buffer = create_secbuffer(content)
+    bufdesc = create_secbufferdesc(buffer)
+    assert_equal FFI::Pointer.new(buffer.pointer), bufdesc[:pBuffers]
+    assert_equal 1, bufdesc[:cBuffers]
+    assert_equal SECBUFFER_VERSION, bufdesc[:ulVersion]
+  end
 end
