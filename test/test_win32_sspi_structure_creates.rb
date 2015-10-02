@@ -66,4 +66,21 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     spkg_names = create_secpkg_context_names(name)
     assert_equal name, spkg_names[:sUserName].read_string
   end
+  
+  def test_to_ruby_s_accessors
+    content = "test content"
+    buffer = create_secbuffer(content)
+    assert_equal content, buffer.to_ruby_s
+
+    # FIXME: something un-intuitive about this ...
+    buffer = create_secbuffer
+    assert_equal TOKENBUFSIZE, buffer.to_ruby_s.length
+    
+    name ="test"
+    spkg_names = create_secpkg_context_names(name)
+    assert_equal name, spkg_names.to_ruby_s
+
+    spkg_names = create_secpkg_context_names
+    assert_nil spkg_names.to_ruby_s
+  end
 end

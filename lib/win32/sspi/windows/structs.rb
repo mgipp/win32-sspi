@@ -60,6 +60,11 @@ module Windows
 
         self
       end
+      
+      def to_ruby_s
+        bsize = self[:cbBuffer]
+        bsize > 0 ? self[:pvBuffer].read_string_length(bsize) : nil
+      end
     end
 
     class SecBufferDesc < FFI::Struct
@@ -90,6 +95,10 @@ module Windows
 
     class SecPkgContext_Names < FFI::Struct
       layout(:sUserName, :pointer)
+      
+      def to_ruby_s
+        self[:sUserName].null? ? nil : self[:sUserName].read_string
+      end
     end
   end
 end
