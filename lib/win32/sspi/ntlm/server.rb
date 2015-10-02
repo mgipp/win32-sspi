@@ -1,6 +1,5 @@
 require 'base64'
 require_relative '../windows/constants'
-require_relative '../windows/structs'
 require_relative '../windows/misc'
 require_relative '../api/server'
 
@@ -9,7 +8,6 @@ module Win32
     module NTLM
       class Server
         include Windows::Constants
-        include Windows::Structs
         include API::Server
         extend API::Server
 
@@ -20,8 +18,8 @@ module Win32
 
         def initialize(auth_type = 'NTLM')
           @auth_type = auth_type
-          @context = CtxtHandle.new
-          @credentials = CredHandle.new
+          @context = create_ctxhandle
+          @credentials = create_credhandle
 
           # This won't be initialized until the call to initial_token.
           @type_1_message = nil
@@ -48,7 +46,7 @@ module Win32
         #
         def initial_token(type_1_message)
           @type_1_message = type_1_message
-          time_struct = TimeStamp.new
+          time_struct = create_timestamp
 
           status = acquire_credentials_handle(
             nil,
@@ -66,12 +64,12 @@ module Win32
             raise SystemCallError.new('AcquireCredentialsHandle', FFI.errno)
           end
 
-          expiry  = TimeStamp.new
-          outbuf  = SecBuffer.new.init
-          inbuf   = SecBuffer.new.init(@type_1_message)
+          expiry  = create_timestamp
+          outbuf  = create_secbuffer
+          inbuf   = create_secbuffer(@type_1_message)
 
-          outbuf_sec = SecBufferDesc.new.init(outbuf)
-          inbuf_sec  = SecBufferDesc.new.init(inbuf)
+          outbuf_sec = create_secbufferdesc(outbuf)
+          inbuf_sec  = create_secbufferdesc(inbuf)
 
           context_attr = FFI::MemoryPointer.new(:ulong)
 
@@ -99,23 +97,20 @@ module Win32
             end
           end
 
-          bsize = outbuf[:cbBuffer]
-          @type_2_message = outbuf[:pvBuffer].read_string_length(bsize)
-
-          @type_2_message
+          @type_2_message = outbuf.to_ruby_s
         end
 
         # Accepts a type 3 message from a client and completes the authentication
         # if successful. Returns the status of the call to AcceptSecurityContext.
         #
         def complete_authentication(token)
-          inbuf = SecBuffer.new.init(token)
-          inbuf_sec = SecBufferDesc.new.init(inbuf)
+          inbuf = create_secbuffer(token)
+          inbuf_sec = create_secbufferdesc(inbuf)
 
           context_attr = FFI::MemoryPointer.new(:ulong)
-          expiry  = TimeStamp.new
-          outbuf  = SecBuffer.new.init
-          outbuf_sec = SecBufferDesc.new.init(outbuf)
+          expiry  = create_timestamp
+          outbuf  = create_secbuffer
+          outbuf_sec = create_secbufferdesc(outbuf)
 
           status = accept_security_context(
             @credentials,
@@ -134,7 +129,7 @@ module Win32
           end
 
           # Finally, let's get the user and domain
-          ptr = SecPkgContext_Names.new
+          ptr = create_secpkg_context_names
 
           qstatus = query_context_attributes(@context, SECPKG_ATTR_NAMES, ptr)
 
@@ -142,7 +137,7 @@ module Win32
             raise SytemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
           end
 
-          user_string = ptr[:sUserName].read_string
+          user_string = ptr.to_ruby_s
 
           if user_string.include?("\\")
             @domain, @username = user_string.split("\\")

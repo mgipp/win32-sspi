@@ -1,5 +1,4 @@
 require_relative '../windows/constants'
-require_relative '../windows/structs'
 require_relative '../windows/misc'
 require_relative '../api/client'
 
@@ -8,7 +7,6 @@ module Win32
     module Negotiate
       class Client
         include Windows::Constants
-        include Windows::Structs
         include API::Client
       
         attr_reader :spn
@@ -34,8 +32,8 @@ module Win32
         def acquire_handle
           return SEC_E_OK if @credentials_handle
         
-          @credentials_handle = CredHandle.new
-          expiry = TimeStamp.new
+          @credentials_handle = create_credhandle
+          expiry = create_timestamp
         
           status = acquire_credentials_handle(
             @spn,
@@ -59,19 +57,19 @@ module Win32
       
         def initialize_context(token=nil)
           ctx = @context_handle
-          context = CtxtHandle.new
+          context = create_ctxhandle
           context_attributes = FFI::MemoryPointer.new(:ulong)
 
           rflags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONNECTION
-          expiry = TimeStamp.new
+          expiry = create_timestamp
 
           if token
-            input_buffer   = SecBuffer.new.init(token)
-            input_buffer_desc  = SecBufferDesc.new.init(input_buffer)
+            input_buffer   = create_secbuffer(token)
+            input_buffer_desc  = create_secbufferdesc(input_buffer)
           end
 
-          output_buffer = SecBuffer.new.init
-          output_buffer_desc  = SecBufferDesc.new.init(output_buffer)
+          output_buffer = create_secbuffer
+          output_buffer_desc  = create_secbufferdesc(output_buffer)
         
           status = initialize_security_context(
             @credentials_handle,
@@ -91,8 +89,7 @@ module Win32
           if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
             raise SystemCallError.new('InitializeSecurityContext', SecurityStatus.new(status))
           else
-            bsize = output_buffer[:cbBuffer]
-            @token = output_buffer[:pvBuffer].read_string_length(bsize)
+            @token = output_buffer.to_ruby_s
           end
         
           @context_handle = context

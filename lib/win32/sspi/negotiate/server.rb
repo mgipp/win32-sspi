@@ -1,5 +1,4 @@
 require_relative '../windows/constants'
-require_relative '../windows/structs'
 require_relative '../windows/misc'
 require_relative '../api/server'
 
@@ -8,7 +7,6 @@ module Win32
     module Negotiate
       class Server
         include Windows::Constants
-        include Windows::Structs
         include API::Server
       
         attr_accessor :auth_type
@@ -36,8 +34,8 @@ module Win32
         def acquire_handle
           return SEC_E_OK if @credentials_handle
         
-          @credentials_handle = CredHandle.new
-          expiry = TimeStamp.new
+          @credentials_handle = create_credhandle
+          expiry = create_timestamp
         
           status = acquire_credentials_handle(
             nil,
@@ -61,20 +59,20 @@ module Win32
       
         def accept_context(token=nil)
           ctx = @context_handle
-          @context_handle ||= CtxtHandle.new
+          @context_handle ||= create_ctxhandle
 
           if token
-            input_buffer   = SecBuffer.new.init(token)
-            input_buffer_desc  = SecBufferDesc.new.init(input_buffer)
+            input_buffer   = create_secbuffer(token)
+            input_buffer_desc  = create_secbufferdesc(input_buffer)
           end
           
           rflags = ASC_REQ_CONFIDENTIALITY | ASC_REQ_REPLAY_DETECT | ASC_REQ_CONNECTION
 
-          output_buffer  = SecBuffer.new.init
-          output_buffer_desc = SecBufferDesc.new.init(output_buffer)
+          output_buffer  = create_secbuffer
+          output_buffer_desc = create_secbufferdesc(output_buffer)
 
           context_attributes = FFI::MemoryPointer.new(:ulong)
-          expiry = TimeStamp.new
+          expiry = create_timestamp
 
           status = accept_security_context(
             @credentials_handle,
@@ -101,15 +99,14 @@ module Win32
             end
           end
 
-          bsize = output_buffer[:cbBuffer]
-          @token = output_buffer[:pvBuffer].read_string_length(bsize)
+          @token = output_buffer.to_ruby_s
 
           status
         end
 
         def query_attributes
           # Finally, let's get the user and domain
-          ptr = SecPkgContext_Names.new
+          ptr = create_secpkg_context_names
 
           status = query_context_attributes(@context_handle, SECPKG_ATTR_NAMES, ptr)
 
@@ -117,7 +114,7 @@ module Win32
             raise SystemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
           end
 
-          user_string = ptr[:sUserName].read_string
+          user_string = ptr.to_ruby_s
 
           if user_string.include?("\\")
             @domain, @username = user_string.split("\\")

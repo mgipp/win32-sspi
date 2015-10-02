@@ -1,6 +1,5 @@
 require 'base64'
 require_relative '../windows/constants'
-require_relative '../windows/structs'
 require_relative '../windows/misc'
 require_relative '../api/client'
 
@@ -9,7 +8,6 @@ module Win32
     module NTLM
       class Client
         include Windows::Constants
-        include Windows::Structs
         include API::Client
 
         attr_reader :username
@@ -47,8 +45,8 @@ module Win32
           @domain    = domain   || ENV['USERDOMAIN'].dup
           @password  = password
           @auth_type = auth_type
-          @context   = CtxtHandle.new
-          @credentials = CredHandle.new
+          @context   = create_ctxhandle
+          @credentials = create_credhandle
           @context_attributes = FFI::MemoryPointer.new(:ulong)
 
           # These are initialized after calls to initial_token and complete_authentication
@@ -83,7 +81,7 @@ module Win32
         # arguments passed to the constructor are used.
         #
         def initial_token(local = true)
-          time_struct = TimeStamp.new
+          time_struct = create_timestamp
           auth_struct = nil
 
           # If local is true, obtain handle to credentials of the logged in user.
@@ -91,23 +89,7 @@ module Win32
           # FIXME: Causes the client to choke in the complete_authentication method.
           unless local
             if @username || @domain || @password
-              auth_struct = SEC_WINNT_AUTH_IDENTITY.new
-              auth_struct[:Flags] = SEC_WINNT_AUTH_IDENTITY_ANSI
-
-              if @username
-                auth_struct[:User] = FFI::MemoryPointer.from_string(@username.dup)
-                auth_struct[:UserLength] = @username.size
-              end
-
-              if @domain
-                auth_struct[:Domain] = FFI::MemoryPointer.from_string(@domain.dup)
-                auth_struct[:DomainLength] = @domain.size
-              end
-
-              if @password
-                auth_struct[:Password] = FFI::MemoryPointer.from_string(@password.dup)
-                auth_struct[:PasswordLength] = @password.size
-              end
+              auth_struct = create_sec_winnt_auth_identity(@username,@domain,@password)
             end
           end
 
@@ -128,10 +110,10 @@ module Win32
           end
 
           rflags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONNECTION
-          expiry = TimeStamp.new
+          expiry = create_timestamp
 
-          sec_buf = SecBuffer.new.init
-          buffer  = SecBufferDesc.new.init(sec_buf)
+          sec_buf = create_secbuffer
+          buffer  = create_secbufferdesc(sec_buf)
 
           status = initialize_security_context(
             @credentials,
@@ -151,8 +133,7 @@ module Win32
           if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
             raise SystemCallError.new('InitializeSecurityContext', FFI.errno)
           else
-            bsize = sec_buf[:cbBuffer]
-            @type_1_message = sec_buf[:pvBuffer].read_string_length(bsize)
+            @type_1_message = sec_buf.to_ruby_s
           end
 
           @type_1_message
@@ -164,13 +145,13 @@ module Win32
         def complete_authentication(token)
           rflags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONNECTION
 
-          expiry = TimeStamp.new
+          expiry = create_timestamp
 
-          sec_buf_in = SecBuffer.new.init(token)
-          buf_in = SecBufferDesc.new.init(sec_buf_in)
+          sec_buf_in = create_secbuffer(token)
+          buf_in = create_secbufferdesc(sec_buf_in)
 
-          sec_buf_out = SecBuffer.new.init
-          buf_out = SecBufferDesc.new.init(sec_buf_out)
+          sec_buf_out = create_secbuffer
+          buf_out = create_secbufferdesc(sec_buf_out)
 
           status = initialize_security_context(
             @credentials,
@@ -191,10 +172,9 @@ module Win32
             SystemCallError.new('InitializeSecurityContext', SecurityStatus.new(status))
           end
 
-          bsize = sec_buf_out[:cbBuffer]
-          token = sec_buf_out[:pvBuffer].read_string_length(bsize)
+          token = sec_buf_out.to_ruby_s
 
-          ptr = SecPkgContext_Names.new
+          ptr = create_secpkg_context_names
 
           status = query_context_attributes(@context, SECPKG_ATTR_NAMES, ptr)
 
@@ -202,7 +182,7 @@ module Win32
             raise SystemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
           end
 
-          user_string = ptr[:sUserName].read_string
+          user_string = ptr.to_ruby_s
 
           if user_string.include?("\\")
             @domain, @username = user_string.split("\\")
