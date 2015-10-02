@@ -6,6 +6,13 @@ require 'win32/sspi/negotiate/client'
 
 class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   SPN = "HTTP/virtual-server.gas.local"
+  MockCredentialHandle = [777,888]
+  MockTimeStamp = [0x000000FF,0xFF000000]
+  MockContextHandle = [123,987]
+  MockSecBufferContent = "0123456789"*10
+  ContextAttr = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
+                Windows::Constants::ISC_REQ_REPLAY_DETECT | 
+                Windows::Constants::ISC_REQ_CONNECTION
 
   def setup
     @client = Win32::SSPI::Negotiate::Client.new(SPN)
@@ -74,7 +81,9 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nil args[5], "unexpected p_getkeyfn"
     assert_nil args[6], "unexpected p_getkeyarg"
     assert_kind_of Windows::Structs::CredHandle, args[7], "unexpected ph_newcredentials"
+    assert_equal MockCredentialHandle, args[7].marshal_dump
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
+    assert_equal MockTimeStamp, args[8].marshal_dump
   end
   
   def test_acquire_handle_memoizes_handle
@@ -82,6 +91,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
+    assert_equal 9, client.retrieve_state(:acquire).length
   end
   
   def test_acquire_handle_raises_when_windows_api_returns_failed_status
@@ -104,21 +114,23 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     args = client.retrieve_state(:isc)
     assert_equal 12, args.length, "unexpected arguments"
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
+    assert_equal MockCredentialHandle, args[0].marshal_dump
     assert_nil args[1], "unexpected ph_context"
     assert_equal SPN, args[2], "unexpected psz_targetname"
     
-    rflags = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
-              Windows::Constants::ISC_REQ_REPLAY_DETECT | 
-              Windows::Constants::ISC_REQ_CONNECTION
-    assert_equal rflags, args[3], "unexpected f_contextreq"
+    assert_equal ContextAttr, args[3], "unexpected f_contextreq"
     assert_equal 0, args[4], "unexpected reserved1"
     assert_equal Windows::Constants::SECURITY_NETWORK_DREP, args[5], "unexpected targetrep"
     assert_nil args[6], "unexpected p_input"
     assert_equal 0, args[7], "unexpected reserved2"
     assert_kind_of Windows::Structs::CtxtHandle, args[8], "unexpected ph_newcontext"
-    assert_kind_of Windows::Structs::SecBufferDesc, args[9], "unexpected ph_newcontext"
+    assert_equal MockContextHandle, args[8].marshal_dump
+    assert_kind_of Windows::Structs::SecBufferDesc, args[9], "unexpected p_output"
+    assert_equal MockSecBufferContent, client.token
     assert_kind_of FFI::MemoryPointer, args[10], "unexpected pf_contextattr"
+    assert_equal ContextAttr, args[10].read_ulong
     assert_kind_of Windows::Structs::TimeStamp, args[11], "unexpected pts_expiry"
+    assert_equal MockTimeStamp, args[11].marshal_dump
   end
   
   def test_initialize_context_raises_when_windows_api_returns_failed_status
@@ -140,12 +152,28 @@ end
 
 class MockNegotiateClient < Win32::SSPI::Negotiate::Client
   def acquire_credentials_handle(*args)
-    capture_state(:acquire, args)
+    s_args = retrieve_state(:acquire)
+    if s_args
+      s_args = [s_args]
+      s_args << args
+      capture_state(:acquire, s_args)
+    else
+      capture_state(:acquire,args)
+    end
+    # this api should return a credential handle in arg[7]
+    # and a timestamp in arg[8]
+    args[7].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockCredentialHandle)
+    args[8].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockTimeStamp)
     return Windows::Constants::SEC_E_OK
   end
   
   def initialize_security_context(*args)
     capture_state(:isc, args)
+    # this api should return a new context, p_output, context attr and timestamp
+    args[8].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockContextHandle)
+    args[9].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockSecBufferContent)
+    args[10].write_ulong(TC_Win32_SSPI_Negotiate_Client::ContextAttr)
+    args[11].marshal_load(TC_Win32_SSPI_Negotiate_Client::MockTimeStamp)
     return Windows::Constants::SEC_I_CONTINUE_NEEDED
   end
   
