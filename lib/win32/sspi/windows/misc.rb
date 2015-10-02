@@ -24,7 +24,8 @@ class SecurityStatusError < StandardError
 
   def get_last_error(err_num = FFI.errno)
     buf = FFI::MemoryPointer.new(:char, 512)
-    FormatMessageA(12288, 0, err_num, 0, buf, buf.size, nil)
+    flags = 0x00001000 # means format message from system table
+    FormatMessageA(flags, 0, err_num, 0, buf, buf.size, nil)
     buf.read_string
   end
 end
