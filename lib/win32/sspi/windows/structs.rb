@@ -116,6 +116,10 @@ module Windows
     class SecPkgContext_Names < FFI::Struct
       layout(:sUserName, :pointer)
       
+      def marshal_load(username)
+        self[:sUserName] = FFI::MemoryPointer.from_string(username)
+      end
+      
       def to_ruby_s
         self[:sUserName].null? ? nil : self[:sUserName].read_string
       end
