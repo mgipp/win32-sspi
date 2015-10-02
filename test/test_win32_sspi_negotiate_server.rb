@@ -226,6 +226,42 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
     assert_raises(SecurityStatusError){ server.query_attributes }
   end
+  
+  def test_authenticate_and_continue
+    server = Class.new(MockNegotiateServer) do
+      def accept_security_context(*args)
+        super
+        return Windows::Constants::SEC_I_COMPLETE_NEEDED
+      end
+    end.new
+    counter = 0
+    token = MockSpnegoToken
+    while server.authenticate_and_continue?(token)
+      token = server.token
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+    end
+
+    ach_args = server.retrieve_state(:ach)
+    refute_nil ach_args
+    assert_equal 9, ach_args.length
+    
+    asc_args = server.retrieve_state(:asc)
+    refute_nil asc_args
+    assert_equal 9, asc_args.length
+    
+    cat_args = server.retrieve_state(:cat)
+    refute_nil cat_args
+    assert_equal 2, cat_args.length
+    
+    dsc_args = server.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = server.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+  end
 
   def teardown
     @server = nil
@@ -261,6 +297,11 @@ class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   def query_context_attributes(*args)
     capture_state(:qca,args)
     args[2].marshal_load("jes.local\\jimmy")
+    return Windows::Constants::SEC_E_OK
+  end
+  
+  def delete_security_context(*args)
+    capture_state(:dsc,args)
     return Windows::Constants::SEC_E_OK
   end
   

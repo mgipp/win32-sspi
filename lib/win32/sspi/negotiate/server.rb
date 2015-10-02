@@ -91,6 +91,8 @@ module Win32
               status = complete_auth_token(@context_handle, output_buffer_desc)
               if status != SEC_E_OK
                 raise SecurityStatusError.new('CompleteAuthToken', status, FFI.errno)
+              else
+                status = query_attributes
               end
             else
               unless status == SEC_I_CONTINUE_NEEDED
@@ -119,9 +121,16 @@ module Win32
           if user_string.include?("\\")
             @domain, @username = user_string.split("\\")
           end
+          
+          if @context_handle
+            status, @context_handle = [delete_security_context(@context_handle),nil]
+            if status != SEC_E_OK
+              raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
+            end
+          end
 
           if @credentials_handle
-            status = free_credentials_handle(@credentials_handle)
+            status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
             if status != SEC_E_OK
               raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
             end
