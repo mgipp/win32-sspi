@@ -6,6 +6,13 @@ require 'win32/sspi/negotiate/server'
 
 class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
   MockSpnegoToken = "123456789012345678901234567890"
+  MockCredentialHandle = [777,888]
+  MockTimeStamp = [0x000000FF,0xFF000000]
+  MockContextHandle = [123,987]
+  MockSecBufferContent = "0123456789"*10
+  ContextAttr = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
+                Windows::Constants::ISC_REQ_REPLAY_DETECT | 
+                Windows::Constants::ISC_REQ_CONNECTION
 
   def setup
     @server = Win32::SSPI::Negotiate::Server.new
@@ -86,7 +93,9 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_nil args[5], "unexpected p_getkeyfn"
     assert_nil args[6], "unexpected p_getkeyarg"
     assert_kind_of Windows::Structs::CredHandle, args[7], "unexpected ph_newcredentials"
+    assert_equal MockCredentialHandle, args[7].marshal_dump
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
+    assert_equal MockTimeStamp, args[8].marshal_dump
   end
   
   def test_acquire_handle_memoizes_handle
@@ -94,6 +103,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ @status = server.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
+    assert_equal 9, server.retrieve_state(:ach).length
   end
   
   def test_acquire_handle_raises_when_windows_api_returns_failed_status
@@ -115,17 +125,19 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     args = server.retrieve_state(:asc)
     assert_equal 9, args.length, "unexpected args"
     assert_kind_of Windows::Structs::CredHandle, args[0], "unexpected ph_credentials"
+    assert_equal MockCredentialHandle, args[0].marshal_dump
     assert_nil args[1], "unexpected ph_context"
     assert_kind_of Windows::Structs::SecBufferDesc, args[2], "unexpected p_input"
-    rflags = Windows::Constants::ASC_REQ_CONFIDENTIALITY | 
-              Windows::Constants::ASC_REQ_REPLAY_DETECT | 
-              Windows::Constants::ASC_REQ_CONNECTION
-    assert_equal rflags, args[3], "unexpected f_contextreq"
+    assert_equal ContextAttr, args[3], "unexpected f_contextreq"
     assert_equal Windows::Constants::SECURITY_NATIVE_DREP, args[4], "unexpected targetdatarep"
     assert_kind_of Windows::Structs::CtxtHandle, args[5], "unexpected ph_newcontext"
+    assert_equal MockContextHandle, args[5].marshal_dump
     assert_kind_of Windows::Structs::SecBufferDesc, args[6], "unexpected p_output"
+    assert_equal MockSecBufferContent, server.token
     assert_kind_of FFI::MemoryPointer, args[7], "unexpected pf_contextattr"
+    assert_equal ContextAttr, args[7].read_ulong
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
+    assert_equal MockTimeStamp, args[8].marshal_dump
   end
   
   def test_accept_context_raises_when_windows_api_returns_failed_status
@@ -141,10 +153,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
   def test_complet_auth_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
-        capture_state(:asc, args)
-        ptr = args[5]
-        ptr.marshal_load([777,999])
-        # can't really call super here because we have a fake auth token
+        super
         return Windows::Constants::SEC_I_COMPLETE_NEEDED
       end
     end.new
@@ -156,16 +165,15 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     args = server.retrieve_state(:cat)
     assert_equal 2, args.length
     assert_kind_of Windows::Structs::CtxtHandle, args[0], "unexpected ph_context"
+    assert_equal MockContextHandle, args[0].marshal_dump
     assert_kind_of Windows::Structs::SecBufferDesc, args[1], "unexpected p_output"
+    assert_equal MockSecBufferContent, args[1].marshal_dump
   end
   
   def test_complet_auth_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
-        capture_state(:asc, args)
-        ptr = args[5]
-        ptr.marshal_load([777,999])
-        # can't really call super here because we have a fake auth token
+        super
         return Windows::Constants::SEC_I_COMPLETE_NEEDED
       end
       def complete_auth_token(*args)
@@ -188,6 +196,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     args = server.retrieve_state(:qca)
     assert_equal 3, args.length
     assert_kind_of Windows::Structs::CtxtHandle, args[0], "unexpected ph_context"
+    assert_equal MockContextHandle, args[0].marshal_dump
     assert_equal Windows::Constants::SECPKG_ATTR_NAMES, args[1], "unexpected ul_attribute"
     assert_kind_of Windows::Structs::SecPkgContext_Names, args[2], "unexpected p_buffer"
     
@@ -225,15 +234,28 @@ end
 
 class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   def acquire_credentials_handle(*args)
-    capture_state(:ach, args)
+    s_args = retrieve_state(:ach)
+    if s_args
+      s_args = [s_args]
+      s_args << args
+      capture_state(:ach, s_args)
+    else
+      capture_state(:ach,args)
+    end
+    # this api should return a credential handle in arg[7]
+    # and a timestamp in arg[8]
+    args[7].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockCredentialHandle)
+    args[8].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockTimeStamp)
     return Windows::Constants::SEC_E_OK
   end
   
   def accept_security_context(*args)
     capture_state(:asc, args)
-    ptr = args[5]
-    ptr.marshal_load([777,999])
-    # can't really call super here because we have a fake auth token
+    # this api should return a new context, p_output, context attr and timestamp
+    args[5].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockContextHandle)
+    args[6].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockSecBufferContent)
+    args[7].write_ulong(TC_Win32_SSPI_Negotiate_Server::ContextAttr)
+    args[8].marshal_load(TC_Win32_SSPI_Negotiate_Server::MockTimeStamp)
     return Windows::Constants::SEC_E_OK
   end
   
@@ -244,8 +266,7 @@ class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   
   def query_context_attributes(*args)
     capture_state(:qca,args)
-    ptr = args[2]
-    ptr[:sUserName] = FFI::MemoryPointer::from_string("jes.local\\jimmy")
+    args[2].marshal_load("jes.local\\jimmy")
     return Windows::Constants::SEC_E_OK
   end
   
