@@ -226,7 +226,7 @@ end
 class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   def acquire_credentials_handle(*args)
     capture_state(:ach, args)
-    return super
+    return Windows::Constants::SEC_E_OK
   end
   
   def accept_security_context(*args)
@@ -251,7 +251,7 @@ class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   
   def free_credentials_handle(*args)
     capture_state(:fch,args)
-    return super
+    return Windows::Constants::SEC_E_OK
   end
   
   def capture_state(key,value)
