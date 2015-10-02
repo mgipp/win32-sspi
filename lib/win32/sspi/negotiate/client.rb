@@ -57,7 +57,7 @@ module Win32
       
         def initialize_context(token=nil)
           ctx = @context_handle
-          context = create_ctxhandle
+          @context_handle ||= create_ctxhandle
           context_attributes = FFI::MemoryPointer.new(:ulong)
 
           rflags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONNECTION
@@ -80,7 +80,7 @@ module Win32
             SECURITY_NETWORK_DREP,
             (token ? input_buffer_desc : nil),
             0,
-            context,
+            @context_handle,
             output_buffer_desc,
             context_attributes,
             expiry
@@ -91,17 +91,20 @@ module Win32
           end
         
           @token = output_buffer.to_ruby_s
-          @context_handle ||= context
 
           if SEC_E_OK == status # we are done .. free up handles
-            status, @context_handle = [delete_security_context(@context_handle),nil]
-            if SEC_E_OK != status
-              raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
+            if @context_handle
+              status, @context_handle = [delete_security_context(@context_handle),nil]
+              if SEC_E_OK != status
+                raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
+              end
             end
             
-            status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
-            if SEC_E_OK != status
-              raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
+            if @credentials_handle
+              status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
+              if SEC_E_OK != status
+                raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
+              end
             end
           end
 
