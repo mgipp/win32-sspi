@@ -106,7 +106,7 @@ module Win32
           )
 
           if status != SEC_E_OK
-            raise SystemCallError.new('AcquireCredentialsHandle', FFI.errno)
+            raise SecurityStatusError.new('AcquireCredentialsHandle', status, FFI.errno)
           end
 
           rflags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONNECTION
@@ -131,7 +131,7 @@ module Win32
           )
 
           if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
-            raise SystemCallError.new('InitializeSecurityContext', FFI.errno)
+            raise SecurityStatusError.new('InitializeSecurityContext', status, FFI.errno)
           else
             @type_1_message = sec_buf.to_ruby_s
           end
@@ -169,7 +169,7 @@ module Win32
           )
 
           if status != SEC_I_CONTINUE_NEEDED && status != SEC_E_OK
-            SystemCallError.new('InitializeSecurityContext', SecurityStatus.new(status))
+            SecurityStatusError.new('InitializeSecurityContext', status, FFI.errno)
           end
 
           token = sec_buf_out.to_ruby_s
@@ -179,7 +179,7 @@ module Win32
           status = query_context_attributes(@context, SECPKG_ATTR_NAMES, ptr)
 
           if status != SEC_E_OK
-            raise SystemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
+            raise SecurityStatusError.new('QueryContextAttributes', status, FFI.errno)
           end
 
           user_string = ptr.to_ruby_s
@@ -189,11 +189,11 @@ module Win32
           end
 
           if @context && delete_security_context(@context) != SEC_E_OK
-            raise SystemCallError.new('DeleteSecurityContext', FFI.errno)
+            raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
           end
 
           if @credentials && free_credentials_handle(@credentials) != SEC_E_OK
-            raise SystemCallError.new('FreeCredentialsHandle', FFI.errno)
+            raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
           end
 
           @context = nil

@@ -103,7 +103,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
         return Windows::Constants::SEC_E_SECPKG_NOT_FOUND
       end
     end.new
-    assert_raises(Errno::EINVAL){ server.acquire_handle }
+    assert_raises(SecurityStatusError){ server.acquire_handle }
   end
   
   def test_accept_context_invokes_windows_api_as_expected
@@ -135,7 +135,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
         return Windows::Constants::SEC_E_SECPKG_NOT_FOUND
       end
     end.new
-    assert_raises(Errno::EINVAL){ server.accept_context }
+    assert_raises(SecurityStatusError){ server.accept_context }
   end
   
   def test_complet_auth_invokes_windows_api_as_expected
@@ -175,7 +175,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     end.new
 
     assert_nothing_raised{ server.acquire_handle }
-    assert_raises(Errno::EINVAL){ server.accept_context(MockSpnegoToken) }
+    assert_raises(SecurityStatusError){ server.accept_context(MockSpnegoToken) }
   end
   
   def test_query_attributes_invokes_windows_api_as_expected
@@ -202,7 +202,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
         return Windows::Constants::SEC_E_INVALID_HANDLE
       end
     end.new
-    assert_raises(Errno::EINVAL){ server.query_attributes }
+    assert_raises(SecurityStatusError){ server.query_attributes }
   end
   
   def test_query_attributes_raises_when_free_handle_returns_failed_status
@@ -215,7 +215,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
 
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
-    assert_raises(Errno::EINVAL){ server.query_attributes }
+    assert_raises(SecurityStatusError){ server.query_attributes }
   end
 
   def teardown

@@ -51,7 +51,7 @@ module Win32
 
           if status != SEC_E_OK
             @credentials_handle = nil
-            raise SystemCallError.new('AcquireCredentialsHandle', SecurityStatus.new(status))
+            raise SecurityStatusError.new('AcquireCredentialsHandle', status, FFI.errno)
           end
           
           status
@@ -90,11 +90,11 @@ module Win32
             if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
               status = complete_auth_token(@context_handle, output_buffer_desc)
               if status != SEC_E_OK
-                raise SystemCallError.new('CompleteAuthToken', SecurityStatus.new(status))
+                raise SecurityStatusError.new('CompleteAuthToken', status, FFI.errno)
               end
             else
               unless status == SEC_I_CONTINUE_NEEDED
-                raise SystemCallError.new('AcceptSecurityContext', SecurityStatus.new(status))
+                raise SecurityStatusError.new('AcceptSecurityContext', status, FFI.errno)
               end
             end
           end
@@ -111,7 +111,7 @@ module Win32
           status = query_context_attributes(@context_handle, SECPKG_ATTR_NAMES, ptr)
 
           if status != SEC_E_OK
-            raise SystemCallError.new('QueryContextAttributes', SecurityStatus.new(status))
+            raise SecurityStatusError.new('QueryContextAttributes', status, FFI.errno)
           end
 
           user_string = ptr.to_ruby_s
@@ -123,7 +123,7 @@ module Win32
           if @credentials_handle
             status = free_credentials_handle(@credentials_handle)
             if status != SEC_E_OK
-              raise SystemCallError.new('FreeCredentialsHandle', SecurityStatus.new(status))
+              raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
             end
           end
 

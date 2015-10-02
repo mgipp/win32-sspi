@@ -92,7 +92,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
       end
     end.new(SPN)
 
-    assert_raises(Errno::EINVAL){ client.acquire_handle }
+    assert_raises(SecurityStatusError){ client.acquire_handle }
   end
   
   def test_initialize_context_invokes_windows_api_as_expected
@@ -130,7 +130,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     end.new(SPN)
 
     assert_nothing_raised{ client.acquire_handle }
-    assert_raises(Errno::EINVAL){ client.initialize_context }
+    assert_raises(SecurityStatusError){ client.initialize_context }
   end
 
   def teardown

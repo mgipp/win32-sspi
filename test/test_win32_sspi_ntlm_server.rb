@@ -99,7 +99,7 @@ class TC_Win32_SSPI_Server < Test::Unit::TestCase
   end
 
   def test_complete_authentication_raises_an_error_if_a_bogus_token_is_passed
-    assert_raise(Errno::EINVAL){ @server.complete_authentication('foo') }
+    assert_raise(SecurityStatusError){ @server.complete_authentication('foo') }
   end
   
   def test_initial_token_invokes_windows_api_as_expected

@@ -49,7 +49,7 @@ module Win32
 
           if status != SEC_E_OK
             @credentials_handle = nil
-            raise SystemCallError.new('AcquireCredentialsHandle', SecurityStatus.new(status))
+            raise SecurityStatusError.new('AcquireCredentialsHandle', status, FFI.errno)
           end
           
           status
@@ -87,7 +87,7 @@ module Win32
           )
 
           if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
-            raise SystemCallError.new('InitializeSecurityContext', SecurityStatus.new(status))
+            raise SecurityStatusError.new('InitializeSecurityContext', status, FFI.errno)
           else
             @token = output_buffer.to_ruby_s
           end

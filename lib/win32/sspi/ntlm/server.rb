@@ -61,7 +61,7 @@ module Win32
           )
 
           if status != SEC_E_OK
-            raise SystemCallError.new('AcquireCredentialsHandle', FFI.errno)
+            raise SecurityStatusError.new('AcquireCredentialsHandle', status, FFI.errno)
           end
 
           expiry  = create_timestamp
@@ -88,11 +88,11 @@ module Win32
           if status != SEC_E_OK
             if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
               if complete_auth_token(@context, outbuf_sec) != SEC_E_OK
-                raise SystemCallError.new('CompleteAuthToken', FFI.errno)
+                raise SecurityStatusError.new('CompleteAuthToken', status, FFI.errno)
               end
             else
               unless status == SEC_I_CONTINUE_NEEDED
-                raise SystemCallError.new('AcceptSecurityContext', FFI.errno)
+                raise SecurityStatusError.new('AcceptSecurityContext', status, FFI.errno)
               end
             end
           end
@@ -125,7 +125,7 @@ module Win32
           )
 
           if status != SEC_E_OK
-            raise SystemCallError.new('AcceptSecurityContext', SecurityStatus.new(status))
+            raise SecurityStatusError.new('AcceptSecurityContext', status, FFI.errno)
           end
 
           # Finally, let's get the user and domain
@@ -144,7 +144,7 @@ module Win32
           end
 
           if @credentials && free_credentials_handle(@credentials) != SEC_E_OK
-            raise SystemCallError.new('FreeCredentialsHandle', FFI.errno)
+            raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
           end
 
           status
@@ -160,7 +160,7 @@ module Win32
           result = enumerate_security_packages(num, spi)
 
           if result != SEC_E_OK
-            raise SystemCallError.new('EnumerateSecurityPackages', FFI.errno)
+            raise SecurityStatusError.new('EnumerateSecurityPackages', status, FFI.errno)
           else
             begin
               num = num.read_long
