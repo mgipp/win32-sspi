@@ -60,4 +60,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal 1, bufdesc[:cBuffers]
     assert_equal SECBUFFER_VERSION, bufdesc[:ulVersion]
   end
+  
+  def test_create_secpkg_context_names
+    name ="test"
+    spkg_names = create_secpkg_context_names(name)
+    assert_equal name, spkg_names[:sUserName].read_string
+  end
 end

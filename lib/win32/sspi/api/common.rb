@@ -69,6 +69,14 @@ module Win32
           SecBufferDesc.new.init(sec_buffer)
         end
         
+        def create_secpkg_context_names(name=nil)
+          result = SecPkgContext_Names.new
+          if name
+            result[:sUserName] = FFI::MemoryPointer.from_string(name.dup)
+          end
+          result
+        end
+        
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           status = AcquireCredentialsHandle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
           return status
