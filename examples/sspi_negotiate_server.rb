@@ -53,7 +53,6 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
       return
     end
     
-    status = sspi_server.query_attributes
     resp['Remote-User'] = sspi_server.username
     resp['Remote-User-Domain'] = sspi_server.domain
     resp.status = 200
