@@ -1,8 +1,13 @@
 require 'pp'
 require 'base64'
 require 'net/http'
-require 'win32-sspi'
-require 'ntlm/client'
+unless ENV['WIN32_SSPI_TEST']
+  require 'win32-sspi'
+  require 'ntlm/client'
+else
+  require 'win32/sspi/ntlm/client'
+  puts "!!!! running with test environment !!!"
+end
 
 class RubySSPIClient
   def self.run(url)

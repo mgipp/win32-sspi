@@ -1,8 +1,13 @@
 # Attempting to setup an example authenticating server
 require 'base64'
 require 'webrick'
-require 'win32-sspi'
-require 'ntlm/server'
+unless ENV['WIN32_SSPI_TEST']
+  require 'win32-sspi'
+  require 'ntlm/server'
+else
+  require 'win32/sspi/ntlm/server'
+  puts "!!!! running with test environment !!!"
+end
 
 # A way to store state across multiple requests
 class StateStore
