@@ -159,7 +159,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     end.new
 
     assert_nothing_raised{ server.acquire_handle }
-    assert_nothing_raised{ @status=server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ @status=server.complete_authentication }
     assert_equal Windows::Constants::SEC_E_OK, @status
 
     args = server.retrieve_state(:cat)
@@ -183,7 +184,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     end.new
 
     assert_nothing_raised{ server.acquire_handle }
-    assert_raises(SecurityStatusError){ server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    assert_raises(SecurityStatusError){ server.complete_authentication }
   end
   
   def test_query_attributes_invokes_windows_api_as_expected

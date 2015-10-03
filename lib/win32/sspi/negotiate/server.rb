@@ -27,6 +27,12 @@ module Win32
           status = acquire_handle
           if SEC_E_OK == status
             status = accept_context(token)
+            if [SEC_I_COMPLETE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE].include?(status)
+              status = complete_authentication
+            end
+            if SEC_E_OK == status
+              status = query_attributes
+            end
           end
           status_continue?(status)
         end
@@ -86,23 +92,29 @@ module Win32
             expiry
           )
 
-          if status != SEC_E_OK
-            if status == SEC_I_COMPLETE_NEEDED || status == SEC_I_COMPLETE_AND_CONTINUE
-              status = complete_auth_token(@context_handle, output_buffer_desc)
-              if status != SEC_E_OK
-                raise SecurityStatusError.new('CompleteAuthToken', status, FFI.errno)
-              else
-                status = query_attributes
-              end
-            else
-              unless status == SEC_I_CONTINUE_NEEDED
-                raise SecurityStatusError.new('AcceptSecurityContext', status, FFI.errno)
-              end
+          a_success = [SEC_E_OK, SEC_I_CONTINUE_NEEDED, SEC_I_COMPLETE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE]
+          if a_success.include?(status)
+            @token = output_buffer.to_ruby_s
+          else
+            raise SecurityStatusError.new('AcceptSecurityContext', status, FFI.errno)
+          end
+          
+          status
+        end
+        
+        def complete_authentication
+          status = SEC_E_OK
+          
+          if @token
+            input_buffer = create_secbuffer(@token)
+            input_buffer_desc  = create_secbufferdesc(input_buffer)
+            
+            status = complete_auth_token(@context_handle, input_buffer_desc)
+            if SEC_E_OK != status
+              raise SecurityStatusError.new('CompleteAuthToken', status, FFI.errno)
             end
           end
-
-          @token = output_buffer.to_ruby_s
-
+          
           status
         end
 
