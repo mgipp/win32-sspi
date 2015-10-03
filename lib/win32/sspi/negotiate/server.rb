@@ -131,10 +131,9 @@ module Win32
             raise SecurityStatusError.new('QueryContextAttributes', status, FFI.errno)
           end
 
-          user_string = ptr.to_ruby_s
-
-          if user_string.include?("\\")
-            @domain, @username = user_string.split("\\")
+          @username = ptr.to_ruby_s
+          if @username.include?("\\")
+            @domain, @username = @username.split("\\")
           end
           
           status

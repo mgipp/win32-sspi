@@ -206,6 +206,22 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal "jes.local", server.domain
   end
   
+  def test_query_attributes_without_domain_in_user_string
+    server = Class.new(MockNegotiateServer) do
+      def query_context_attributes(*args)
+        super
+        args[2].marshal_load("jimmy")
+        return Windows::Constants::SEC_E_OK
+      end
+    end.new
+    assert_nothing_raised{ server.acquire_handle }
+    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    assert_nothing_raised{ @status = server.query_attributes }
+    assert_equal Windows::Constants::SEC_E_OK, @status
+    assert_equal "jimmy", server.username
+    assert_equal "", server.domain
+  end
+  
   def test_query_attributes_raises_when_windows_api_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def query_context_attributes(*args)
