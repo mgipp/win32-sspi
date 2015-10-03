@@ -97,9 +97,6 @@ module Win32
           return status
         end
         
-        def status_continue?(status)
-          Windows::Constants::SEC_I_CONTINUE_NEEDED == status
-        end
       end
     end
   end
