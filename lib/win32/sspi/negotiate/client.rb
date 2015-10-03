@@ -25,6 +25,9 @@ module Win32
           status = acquire_handle
           if SEC_E_OK == status
             status = initialize_context(token)
+            if SEC_E_OK == status
+              free_handles
+            end
           end
           status_continue?(status)
         end
@@ -86,28 +89,32 @@ module Win32
             expiry
           )
 
-          if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED
+          a_success = [SEC_E_OK, SEC_I_CONTINUE_NEEDED]
+          if a_success.include?(status)
+            @token = output_buffer.to_ruby_s
+          else
             raise SecurityStatusError.new('InitializeSecurityContext', status, FFI.errno)
           end
-        
-          @token = output_buffer.to_ruby_s
 
-          if SEC_E_OK == status # we are done .. free up handles
-            if @context_handle
-              status, @context_handle = [delete_security_context(@context_handle),nil]
-              if SEC_E_OK != status
-                raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
-              end
-            end
-            
-            if @credentials_handle
-              status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
-              if SEC_E_OK != status
-                raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
-              end
+          status
+        end
+        
+        def free_handles
+          status = SEC_E_OK
+          if @context_handle
+            status, @context_handle = [delete_security_context(@context_handle),nil]
+            if SEC_E_OK != status
+              raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
             end
           end
-
+          
+          if @credentials_handle
+            status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
+            if SEC_E_OK != status
+              raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
+            end
+          end
+          
           status
         end
       end
