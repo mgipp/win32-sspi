@@ -32,6 +32,9 @@ module Win32
             end
             if SEC_E_OK == status
               status = query_attributes
+              if SEC_E_OK == status
+                free_handles
+              end
             end
           end
           status_continue?(status)
@@ -134,20 +137,25 @@ module Win32
             @domain, @username = user_string.split("\\")
           end
           
+          status
+        end
+        
+        def free_handles
+          status = SEC_E_OK
           if @context_handle
             status, @context_handle = [delete_security_context(@context_handle),nil]
-            if status != SEC_E_OK
+            if SEC_E_OK != status
               raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
             end
           end
 
           if @credentials_handle
             status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
-            if status != SEC_E_OK
+            if SEC_E_OK != status
               raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
             end
           end
-
+          
           status
         end
       

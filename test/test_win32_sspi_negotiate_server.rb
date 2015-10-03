@@ -216,7 +216,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(SecurityStatusError){ server.query_attributes }
   end
   
-  def test_query_attributes_raises_when_free_handle_returns_failed_status
+  def test_free_handles_raises_when_free_handle_returns_failed_status
     server = Class.new(MockNegotiateServer) do
       def free_credentials_handle(*args)
         capture_state(:fch,args)
@@ -226,7 +226,8 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
 
     assert_nothing_raised{ server.acquire_handle }
     assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
-    assert_raises(SecurityStatusError){ server.query_attributes }
+    assert_nothing_raised{ server.query_attributes }
+    assert_raises(SecurityStatusError){ server.free_handles }
   end
   
   def test_authenticate_and_continue
