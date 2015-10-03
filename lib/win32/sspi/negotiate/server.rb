@@ -37,7 +37,8 @@ module Win32
               end
             end
           end
-          status_continue?(status)
+          
+          SEC_I_CONTINUE_NEEDED == status
         end
         
         def acquire_handle
@@ -58,7 +59,7 @@ module Win32
             expiry
           )
 
-          if status != SEC_E_OK
+          if SEC_E_OK != status
             @credentials_handle = nil
             raise SecurityStatusError.new('AcquireCredentialsHandle', status, FFI.errno)
           end
@@ -126,8 +127,7 @@ module Win32
           ptr = create_secpkg_context_names
 
           status = query_context_attributes(@context_handle, SECPKG_ATTR_NAMES, ptr)
-
-          if status != SEC_E_OK
+          if SEC_E_OK != status
             raise SecurityStatusError.new('QueryContextAttributes', status, FFI.errno)
           end
 
