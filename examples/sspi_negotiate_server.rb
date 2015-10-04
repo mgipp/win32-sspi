@@ -1,5 +1,4 @@
 # Attempting to setup an example authenticating server
-require 'base64'
 require 'webrick'
 unless ENV['WIN32_SSPI_TEST']
   require 'win32-sspi'
@@ -42,13 +41,10 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
       return
     end
 
-    auth_type, token = req['Authorization'].split(" ")
-    token = Base64.strict_decode64(token)
-
     sspi_server = StateStore.retrieve_server
+    auth_type, token = sspi_server.de_construct_http_header(req['Authorization'])
     if sspi_server.authenticate_and_continue?(token)
-      token = Base64.strict_encode64(sspi_server.token)
-      resp['www-authenticate'] = "#{auth_type} #{token}"
+      resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
       resp.status = 401
       return
     end

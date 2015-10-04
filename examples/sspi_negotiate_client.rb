@@ -1,5 +1,4 @@
 require 'pp'
-require 'base64'
 require 'net/http'
 unless ENV['WIN32_SSPI_TEST']
   require 'win32-sspi'
@@ -18,12 +17,11 @@ class RubySSPIClient
     Net::HTTP.start(uri.host, uri.port) do |http|
       while client.authenticate_and_continue?(token)
         req = Net::HTTP::Get.new(uri.path)
-        req['Authorization'] = "#{client.auth_type} #{Base64.strict_encode64(client.token)}"
+        req['Authorization'] = client.construct_http_header(client.auth_type,client.token)
         resp = http.request(req)
         header = resp['www-authenticate']
         if header
-          auth_type, token = header.split(' ')
-          token = Base64.strict_decode64(token)
+          auth_type, token = client.de_construct_http_header(header)
         end
       end
       
