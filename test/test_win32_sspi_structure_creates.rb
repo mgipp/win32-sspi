@@ -83,4 +83,16 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     spkg_names = create_secpkg_context_names
     assert_nil spkg_names.to_ruby_s
   end
+  
+  def test_construct_de_construct_http_header
+    srand(Time.now.to_i)
+    tokenA = (1..40).inject([]) {|m,r| m << rand(255)}.join('')
+    header = construct_http_header("Negotiate", tokenA)
+    assert_equal "Negotiate", header[0,9]
+    assert_match /\A\p{Print}+\Z/, header
+    
+    auth_type, tokenB = de_construct_http_header(header)
+    assert_equal "Negotiate", auth_type
+    assert_equal tokenA, tokenB
+  end
 end
