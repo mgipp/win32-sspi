@@ -140,6 +140,26 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_raises(SecurityStatusError){ client.initialize_context }
   end
   
+  def test_both_handles_freed_when_free_handles_raises
+    client = Class.new(MockNegotiateClient) do
+      def delete_security_context(*args)
+        capture_state(:dsc, args)
+        return Windows::Constants::SEC_E_INVALID_TOKEN
+      end
+    end.new(SPN)
+
+    assert_nothing_raised{ client.acquire_handle }
+    assert_nothing_raised{ client.initialize_context }
+    
+    refute_nil client.instance_variable_get(:@context_handle)
+    refute_nil client.instance_variable_get(:@credentials_handle)
+    
+    assert_raises{ client.free_handles }
+    
+    assert_nil client.instance_variable_get(:@context_handle)
+    assert_nil client.instance_variable_get(:@credentials_handle)
+  end
+  
   def test_authenticate_and_continue
     client = Class.new(MockNegotiateClient) do
       def credentials_handle; @credentials_handle; end
