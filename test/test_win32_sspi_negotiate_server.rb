@@ -246,6 +246,26 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_raises(SecurityStatusError){ server.free_handles }
   end
   
+  def test_both_handles_freed_when_free_handles_raises
+    server = Class.new(MockNegotiateServer) do
+      def delete_security_context(*args)
+        capture_state(:dsc, args)
+        return Windows::Constants::SEC_E_INVALID_TOKEN
+      end
+    end.new
+
+    assert_nothing_raised{ server.acquire_handle }
+    assert_nothing_raised{ server.accept_context(MockSpnegoToken) }
+    
+    refute_nil server.instance_variable_get(:@context_handle)
+    refute_nil server.instance_variable_get(:@credentials_handle)
+    
+    assert_raises{ server.free_handles }
+    
+    assert_nil server.instance_variable_get(:@context_handle)
+    assert_nil server.instance_variable_get(:@credentials_handle)
+  end
+  
   def test_authenticate_and_continue
     server = Class.new(MockNegotiateServer) do
       def accept_security_context(*args)
