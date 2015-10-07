@@ -89,7 +89,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     tokenA = (1..40).inject([]) {|m,r| m << rand(255)}.join('')
     header = construct_http_header("Negotiate", tokenA)
     assert_equal "Negotiate", header[0,9]
-    assert_match /\A\p{Print}+\Z/, header
+    assert_match( /\A\p{Print}+\Z/, header)
     
     auth_type, tokenB = de_construct_http_header(header)
     assert_equal "Negotiate", auth_type
