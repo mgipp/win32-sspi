@@ -280,6 +280,9 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     fch_args = server.retrieve_state(:fch)
     refute_nil fch_args
     assert_equal 1, fch_args.length
+    
+    assert_nil server.instance_variable_get(:@credentials_handle)
+    assert_nil server.instance_variable_get(:@context_handle)
   end
 
   def teardown
