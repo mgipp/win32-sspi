@@ -55,7 +55,7 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
     resp['Content-Type'] = "text/plain"
     resp.body = "#{Time.now}: Hello #{sspi_server.username} at #{sspi_server.domain}"
     if sspi_server.token && sspi_server.token.length > 0
-      resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, token)
+      resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
     end
     
     StateStore.clear_state
