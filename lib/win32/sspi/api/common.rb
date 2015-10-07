@@ -108,6 +108,21 @@ module Win32
           return status
         end
         
+        def free_context_and_credentials(context,credentials)
+          result = {name:'', status:SEC_E_OK, dsc_status:SEC_E_OK, fch_status:SEC_E_OK}
+          status = delete_security_context(context)
+          if SEC_E_OK != status
+            result[:name], result[:status], result[:dsc_status] = ["DeleteSecurityContext", status, status]
+          end
+          
+          status = free_credentials_handle(credentials)
+          if SEC_E_OK != status
+            result[:name], result[:status], result[:fch_status] = ["FreeCredentialsHandle", status, status]
+          end
+
+          return result
+        end
+        
       end
     end
   end

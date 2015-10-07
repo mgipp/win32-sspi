@@ -101,26 +101,14 @@ module Win32
         end
         
         def free_handles
-          status, dsc_status,fch_status = [SEC_E_OK,SEC_E_OK,SEC_E_OK]
-          if @context_handle
-            dsc_status, @context_handle = [delete_security_context(@context_handle),nil]
+          result = free_context_and_credentials(@context_handle, @credentials_handle)
+          @context_handle, @credentials_handle = [nil,nil]
+          
+          if SEC_E_OK != result[:status]
+            raise SecurityStatusError.new(result[:name], result[:status], FFI.errno)
           end
           
-          if @credentials_handle
-            fch_status, @credentials_handle = [free_credentials_handle(@credentials_handle),nil]
-          end
-
-          if SEC_E_OK != dsc_status
-            status = dsc_status
-            raise SecurityStatusError.new('DeleteSecurityContext', status, FFI.errno)
-          end
-
-          if SEC_E_OK != fch_status
-            status = fch_status
-            raise SecurityStatusError.new('FreeCredentialsHandle', status, FFI.errno)
-          end
-          
-          status
+          result[:status]
         end
       end
     end

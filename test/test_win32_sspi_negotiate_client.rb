@@ -140,6 +140,65 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_raises(SecurityStatusError){ client.initialize_context }
   end
   
+  def test_free_context_and_credentials
+    client = Class.new(MockNegotiateClient).new(SPN)
+    credentials = client.create_credhandle(MockCredentialHandle)
+    context = client.create_ctxhandle(MockContextHandle)
+    result = client.free_context_and_credentials(context,credentials)
+    status_ok = Windows::Constants::SEC_E_OK
+    assert_equal({name:"",status:status_ok,dsc_status:status_ok,fch_status:status_ok}, result)
+  end
+  
+  def test_free_context_and_credentials_when_failed_delete
+    client = Class.new(MockNegotiateClient) do
+      def delete_security_context(*args)
+        return Windows::Constants::SEC_E_INVALID_HANDLE
+      end
+    end.new(SPN)
+    credentials = client.create_credhandle(MockCredentialHandle)
+    context = client.create_ctxhandle(MockContextHandle)
+    result = client.free_context_and_credentials(context,credentials)
+    status_ok = Windows::Constants::SEC_E_OK
+    status_failed = Windows::Constants::SEC_E_INVALID_HANDLE
+    expected_result = {name:"DeleteSecurityContext",
+                        status:status_failed, dsc_status:status_failed, fch_status:status_ok}
+    assert_equal expected_result, result
+  end
+  
+  def test_free_context_and_credentials_when_failed_free
+    client = Class.new(MockNegotiateClient) do
+      def free_credentials_handle(*args)
+        return Windows::Constants::SEC_E_INVALID_HANDLE
+      end
+    end.new(SPN)
+    credentials = client.create_credhandle(MockCredentialHandle)
+    context = client.create_ctxhandle(MockContextHandle)
+    result = client.free_context_and_credentials(context,credentials)
+    status_ok = Windows::Constants::SEC_E_OK
+    status_failed = Windows::Constants::SEC_E_INVALID_HANDLE
+    expected_result = {name:"FreeCredentialsHandle",
+                        status:status_failed, dsc_status:status_ok, fch_status:status_failed}
+    assert_equal expected_result, result
+  end
+  
+  def test_free_context_and_credentials_when_both_fail
+    client = Class.new(MockNegotiateClient) do
+      def delete_security_context(*args)
+        return Windows::Constants::SEC_E_INVALID_HANDLE
+      end
+      def free_credentials_handle(*args)
+        return Windows::Constants::SEC_E_INVALID_HANDLE
+      end
+    end.new(SPN)
+    credentials = client.create_credhandle(MockCredentialHandle)
+    context = client.create_ctxhandle(MockContextHandle)
+    result = client.free_context_and_credentials(context,credentials)
+    status_failed = Windows::Constants::SEC_E_INVALID_HANDLE
+    expected_result = {name:"FreeCredentialsHandle",
+                        status:status_failed, dsc_status:status_failed, fch_status:status_failed}
+    assert_equal expected_result, result
+  end
+  
   def test_both_handles_freed_when_free_handles_raises
     client = Class.new(MockNegotiateClient) do
       def delete_security_context(*args)
