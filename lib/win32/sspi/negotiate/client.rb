@@ -60,6 +60,8 @@ module Win32
         end
       
         def initialize_context(token=nil)
+          return SEC_E_OK if token.nil? && @context_handle
+          
           ctx = @context_handle
           @context_handle ||= create_ctxhandle
           context_attributes = FFI::MemoryPointer.new(:ulong)

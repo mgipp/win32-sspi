@@ -251,6 +251,59 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nil client.credentials_handle
     assert_nil client.context_handle
   end
+  
+  def test_authenticate_and_continue_when_no_authenticate_header
+    # while experimenting with the ruby win32-sspi client
+    # and apache/mod_authnz_sspi combination I discovered that mod_authnz_sspi
+    # does not return a www-authenticate header when the client
+    # provides an authorization header for kerberos authentication.
+    # It assumes that the client by providing an authorization header
+    # the transaction is in its final leg which strictly speaking is
+    # not correct. The final leg of the transaction should be signaled
+    # by the return status from AcceptSecurityContext. So the end result
+    # was that this client would blow out sideways because the token passed
+    # to authenticate_and_continue in the 2nd leg of the transaction is
+    # nil (since the server did not return any www-authenticate header).
+    # To remedy this I placed a condition at the start of initialize_context
+    # that states if the given token is nil and the context_handle instance
+    # variable is not nil (thus we are in leg n (>1)) of the authentication
+    # transaction then we must be complete.
+    # TODO:
+    # => Revisit mod_authnz_sspi and see if this can be fixed because
+    # => I believe this is a bug or oversite in that module
+    #
+    client = Class.new(MockNegotiateClient).new(SPN)
+    counter = 0
+    token = nil
+    while client.authenticate_and_continue?(token)
+      # normally token would be updated from the www-authenticate header
+      # received from the server
+      # auth_type, token = client.de_construct_http_header( resp['www-authenticate'] )
+      # but for this test leave the token nil and verify that authentication terminates
+      # as expected
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+    end
+
+    acquire_args = client.retrieve_state(:acquire)
+    refute_nil acquire_args
+    assert_equal 9, acquire_args.length
+    
+    isc_args = client.retrieve_state(:isc)
+    refute_nil isc_args
+    assert_equal 12, isc_args.length
+    
+    dsc_args = client.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = client.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+    
+    assert_nil client.instance_variable_get(:@credentials_handle)
+    assert_nil client.instance_variable_get(:@context_handle)
+  end
 
   def teardown
     @client = nil
