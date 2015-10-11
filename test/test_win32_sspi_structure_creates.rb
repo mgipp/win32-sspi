@@ -12,8 +12,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     identity = create_sec_winnt_auth_identity(user,domain,password)
     assert_equal user, identity[:User].read_string
     assert_equal user.length, identity[:UserLength]
+    assert_equal user, identity.user_to_ruby_s
     assert_equal domain, identity[:Domain].read_string
     assert_equal domain.length, identity[:DomainLength]
+    assert_equal domain, identity.domain_to_ruby_s
     assert_equal password, identity[:Password].read_string
     assert_equal password.length, identity[:PasswordLength]
     assert_equal SEC_WINNT_AUTH_IDENTITY_ANSI, identity[:Flags]

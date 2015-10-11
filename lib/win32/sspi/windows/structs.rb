@@ -14,6 +14,16 @@ module Windows
         :PasswordLength, :ulong,
         :Flags, :ulong
       )
+      
+      def user_to_ruby_s
+        bsize = self[:UserLength]
+        bsize > 0 ? self[:User].read_string_length(bsize) : nil
+      end
+      
+      def domain_to_ruby_s
+        bsize = self[:DomainLength]
+        bsize > 0 ? self[:Domain].read_string_length(bsize) : nil
+      end
     end
 
     class SecHandle < FFI::Struct
