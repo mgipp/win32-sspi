@@ -304,7 +304,29 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_nil client.instance_variable_get(:@credentials_handle)
     assert_nil client.instance_variable_get(:@context_handle)
   end
+  
+  def test_acquire_handle_invokes_windows_api_as_expected_with_ntlm_auth_type
+    client = Class.new(MockNegotiateClient).new(auth_type:'NTLM')
+    assert_nothing_raised{ @status = client.acquire_handle }
+    assert_equal Windows::Constants::SEC_E_OK, @status
 
+    args = client.retrieve_state(:acquire)
+    assert_equal 9, args.length, "acquire_credentials_handle should have 9 arguments"
+    assert_nil args[0], "unexpected psz_principal"
+    assert_equal 'NTLM', args[1], "unexpected psz_package"
+    assert_equal Windows::Constants::SECPKG_CRED_OUTBOUND, args[2], "unexpected f_credentialuse"
+    assert_nil args[3], "unexpected pv_logonid"
+    assert_kind_of Windows::Structs::SEC_WINNT_AUTH_IDENTITY, args[4], "unexpected p_authdata"
+    assert_equal ENV['USERNAME'], args[4].user_to_ruby_s
+    assert_equal ENV['USERDOMAIN'], args[4].domain_to_ruby_s
+    assert_nil args[5], "unexpected p_getkeyfn"
+    assert_nil args[6], "unexpected p_getkeyarg"
+    assert_kind_of Windows::Structs::CredHandle, args[7], "unexpected ph_newcredentials"
+    assert_equal MockCredentialHandle, args[7].marshal_dump
+    assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
+    assert_equal MockTimeStamp, args[8].marshal_dump
+  end
+  
   def teardown
     @client = nil
   end

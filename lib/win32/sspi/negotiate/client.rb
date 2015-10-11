@@ -35,7 +35,12 @@ module Win32
         
         def acquire_handle
           return SEC_E_OK if @credentials_handle
-        
+          
+          auth_data = nil
+          if 'NTLM' == @auth_type
+            auth_data = create_sec_winnt_auth_identity(ENV['USERNAME'],ENV['USERDOMAIN'],nil)
+          end
+          
           @credentials_handle = create_credhandle
           expiry = create_timestamp
         
@@ -44,7 +49,7 @@ module Win32
             @auth_type,
             SECPKG_CRED_OUTBOUND,
             nil,
-            nil,
+            auth_data,
             nil,
             nil,
             @credentials_handle,
