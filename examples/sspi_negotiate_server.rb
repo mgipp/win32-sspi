@@ -41,11 +41,22 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
       return
     end
 
-    sspi_server = StateStore.retrieve_server
-    auth_type, token = sspi_server.de_construct_http_header(req['Authorization'])
-    if sspi_server.authenticate_and_continue?(token)
-      resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
+    begin
+      sspi_server = StateStore.retrieve_server
+      auth_type, token = sspi_server.de_construct_http_header(req['Authorization'])
+      if sspi_server.authenticate_and_continue?(token)
+        resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
+        resp.status = 401
+        return
+      end
+    rescue SecurityStatusError => e
+      sspi_server.free_handles
+      StateStore.clear_state
+      resp['www-authenticate'] = 'Negotiate'
+      resp['Content-Type'] = "text/plain"
       resp.status = 401
+      resp.body = e.message
+      puts "*** server encountered the following error ***\n #{e.message}"
       return
     end
     
