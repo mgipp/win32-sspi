@@ -11,7 +11,7 @@ end
 class RubySSPIClient
   def self.run(url)
     uri = URI.parse(url)
-    client = Win32::SSPI::Negotiate::Client.new("HTTP/#{uri.host}")
+    client = Win32::SSPI::Negotiate::Client.new(spn:"HTTP/#{uri.host}")
     token = nil
     
     Net::HTTP.start(uri.host, uri.port) do |http|

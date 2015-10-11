@@ -13,8 +13,8 @@ module Win32
         attr_reader :auth_type
         attr_reader :token
       
-        def initialize(spn,options={})
-          @spn = spn
+        def initialize(options={})
+          @spn = options[:spn]
           @auth_type = options[:auth_type] || "Negotiate"
           @token = ""
           @credentials_handle = nil

@@ -15,7 +15,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
                 Windows::Constants::ISC_REQ_CONNECTION
 
   def setup
-    @client = Win32::SSPI::Negotiate::Client.new(SPN)
+    @client = Win32::SSPI::Negotiate::Client.new(spn:SPN)
   end
 
   def test_spn_basic_functionality
@@ -31,7 +31,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_kind_of(String, @client.auth_type)
     assert_equal "Negotiate", @client.auth_type
     
-    client = Win32::SSPI::Negotiate::Client.new(SPN, auth_type:"Kerberos")
+    client = Win32::SSPI::Negotiate::Client.new(spn:SPN, auth_type:"Kerberos")
     assert_equal "Kerberos", client.auth_type
   end
 
@@ -62,7 +62,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   end
   
   def test_acquire_handle_invokes_windows_api_as_expected
-    client = Class.new(MockNegotiateClient).new(SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
 
@@ -82,7 +82,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   end
   
   def test_acquire_handle_memoizes_handle
-    client = Class.new(MockNegotiateClient).new(SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
@@ -95,13 +95,13 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
         capture_state(:acquire, args)
         return Windows::Constants::SEC_E_WRONG_PRINCIPAL
       end
-    end.new(SPN)
+    end.new(spn:SPN)
 
     assert_raises(SecurityStatusError){ client.acquire_handle }
   end
   
   def test_initialize_context_invokes_windows_api_as_expected
-    client = Class.new(MockNegotiateClient).new(SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ @status = client.initialize_context }
     assert_equal Windows::Constants::SEC_I_CONTINUE_NEEDED, @status
@@ -134,14 +134,14 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
         capture_state(:isc, args)
         return Windows::Constants::SEC_E_INVALID_TOKEN
       end
-    end.new(SPN)
+    end.new(spn:SPN)
 
     assert_nothing_raised{ client.acquire_handle }
     assert_raises(SecurityStatusError){ client.initialize_context }
   end
   
   def test_free_context_and_credentials
-    client = Class.new(MockNegotiateClient).new(SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     credentials = client.create_credhandle(MockCredentialHandle)
     context = client.create_ctxhandle(MockContextHandle)
     result = client.free_context_and_credentials(context,credentials)
@@ -154,7 +154,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
       def delete_security_context(*args)
         return Windows::Constants::SEC_E_INVALID_HANDLE
       end
-    end.new(SPN)
+    end.new(spn:SPN)
     credentials = client.create_credhandle(MockCredentialHandle)
     context = client.create_ctxhandle(MockContextHandle)
     result = client.free_context_and_credentials(context,credentials)
@@ -170,7 +170,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
       def free_credentials_handle(*args)
         return Windows::Constants::SEC_E_INVALID_HANDLE
       end
-    end.new(SPN)
+    end.new(spn:SPN)
     credentials = client.create_credhandle(MockCredentialHandle)
     context = client.create_ctxhandle(MockContextHandle)
     result = client.free_context_and_credentials(context,credentials)
@@ -189,7 +189,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
       def free_credentials_handle(*args)
         return Windows::Constants::SEC_E_INVALID_HANDLE
       end
-    end.new(SPN)
+    end.new(spn:SPN)
     credentials = client.create_credhandle(MockCredentialHandle)
     context = client.create_ctxhandle(MockContextHandle)
     result = client.free_context_and_credentials(context,credentials)
@@ -205,7 +205,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
         capture_state(:dsc, args)
         return Windows::Constants::SEC_E_INVALID_TOKEN
       end
-    end.new(SPN)
+    end.new(spn:SPN)
 
     assert_nothing_raised{ client.acquire_handle }
     assert_nothing_raised{ client.initialize_context }
@@ -223,7 +223,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     client = Class.new(MockNegotiateClient) do
       def credentials_handle; @credentials_handle; end
       def context_handle; @context_handle; end
-    end.new(SPN)
+    end.new(spn:SPN)
     counter = 0
     token = nil
     while client.authenticate_and_continue?(token)
@@ -272,7 +272,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     # => Revisit mod_authnz_sspi and see if this can be fixed because
     # => I believe this is a bug or oversite in that module
     #
-    client = Class.new(MockNegotiateClient).new(SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     counter = 0
     token = nil
     while client.authenticate_and_continue?(token)
