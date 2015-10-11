@@ -79,13 +79,14 @@ module Win32
         end
         
         def construct_http_header(auth_type, token)
-          b64_token = Base64.strict_encode64(token)
-          "#{auth_type} #{b64_token}"
+          b64_token = token.nil? ? nil : Base64.strict_encode64(token)
+          b64_token.nil? ? "#{auth_type}" : "#{auth_type} #{b64_token}"
         end
         
         def de_construct_http_header(header)
           auth_type, b64_token = header.split(' ')
-          [auth_type, Base64.strict_decode64(b64_token)]
+          token = b64_token.nil? ? nil : Base64.strict_decode64(b64_token)
+          [auth_type, token]
         end
         
         def acquire_credentials_handle(psz_principal,psz_package,f_credentialuse,pv_logonid,p_authdata,p_getkeyfn,pv_getkeyarg,ph_credential,pts_expiry)
