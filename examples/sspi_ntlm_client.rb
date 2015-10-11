@@ -19,7 +19,7 @@ class RubySSPIClient
 
     uri = URI.parse(url)
     Net::HTTP.start(uri.host, uri.port) do |http|
-      req = Net::HTTP::Get.new('/test')
+      req = Net::HTTP::Get.new(uri.path)
       req['Authorization'] = "NTLM #{type_1_msg}"
       resp = http.request(req)
       msg = resp['www-authenticate'].split(' ').last
