@@ -26,23 +26,28 @@ class StateStore
     state.clear
   end
   
-  def self.retrieve_server
-    state[:server] ||= Win32::SSPI::Negotiate::Server.new
+  def self.retrieve_server(auth_type='Negotiate')
+    state[:server] ||= Win32::SSPI::Negotiate::Server.new(auth_type: auth_type)
     state[:server]
   end
 end
 
 
 class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
+  def initialize(server,auth_type)
+    super server
+    @auth_type = auth_type
+  end
+  
   def do_GET(req,resp)
     if req['Authorization'].nil? || req['Authorization'].empty?
-      resp['www-authenticate'] = 'Negotiate'
+      resp['www-authenticate'] = @auth_type
       resp.status = 401
       return
     end
 
     begin
-      sspi_server = StateStore.retrieve_server
+      sspi_server = StateStore.retrieve_server(@auth_type)
       auth_type, token = sspi_server.de_construct_http_header(req['Authorization'])
       if sspi_server.authenticate_and_continue?(token)
         resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
@@ -52,7 +57,7 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
     rescue SecurityStatusError => e
       sspi_server.free_handles
       StateStore.clear_state
-      resp['www-authenticate'] = 'Negotiate'
+      resp['www-authenticate'] = @auth_type
       resp['Content-Type'] = "text/plain"
       resp.status = 401
       resp.body = e.message
@@ -72,10 +77,10 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
     StateStore.clear_state
   end
 
-  def self.run(url)
+  def self.run(url,auth_type)
     uri = URI.parse(url)
     s = WEBrick::HTTPServer.new( :Binding=>uri.host, :Port=>uri.port)
-    s.mount(uri.path, RubySSPIServlet)
+    s.mount(uri.path, RubySSPIServlet, auth_type)
     trap("INT") { s.shutdown }
     s.start
   end
@@ -83,10 +88,12 @@ end
 
 if $0 == __FILE__
   if ARGV.length < 1
-    puts "usage: ruby sspi_negotiate_server.rb url"
+    puts "usage: ruby sspi_negotiate_server.rb url [auth_type (Negotiate|NTLM default=Negotiate)]"
     puts "where: url = http://hostname:port/path"
     exit(0)
   end
-  
-  RubySSPIServlet.run(ARGV[0])
+
+  url = ARGV[0]
+  auth_type = (2 == ARGV.length) ? ARGV[1] : "Negotiate"
+  RubySSPIServlet.run(url,auth_type)
 end
