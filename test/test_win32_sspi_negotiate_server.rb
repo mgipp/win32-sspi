@@ -301,6 +301,10 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     refute_nil fch_args
     assert_equal 1, fch_args.length
     
+    fcb_args = server.retrieve_state(:fcb)
+    refute_nil fcb_args
+    assert_equal 1, fcb_args.length
+    
     assert_nil server.instance_variable_get(:@credentials_handle)
     assert_nil server.instance_variable_get(:@context_handle)
   end
@@ -349,6 +353,11 @@ class MockNegotiateServer < Win32::SSPI::Negotiate::Server
   
   def free_credentials_handle(*args)
     capture_state(:fch,args)
+    return Windows::Constants::SEC_E_OK
+  end
+  
+  def free_context_buffer(*args)
+    capture_state(:fcb,args)
     return Windows::Constants::SEC_E_OK
   end
   
