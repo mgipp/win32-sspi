@@ -46,35 +46,35 @@ class RubySSPIServlet < WEBrick::HTTPServlet::AbstractServlet
       return
     end
 
+    authenticated = false
+
     begin
       sspi_server = StateStore.retrieve_server(@auth_type)
-      auth_type, token = sspi_server.de_construct_http_header(req['Authorization'])
-      if sspi_server.authenticate_and_continue?(token)
-        resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
-        resp.status = 401
-        return
+      authenticated = sspi_server.http_authenticate(req['Authorization']) do |header,complete|
+        resp['www-authenticate'] = header if header
+        if complete
+          resp.status = 200
+          resp['Remote-User'] = sspi_server.username
+          resp['Remote-User-Domain'] = sspi_server.domain
+          resp['Content-Type'] = "text/plain"
+          resp.body = "#{Time.now}: Hello #{sspi_server.username} at #{sspi_server.domain}"
+        else
+          resp.status = 401
+        end
       end
     rescue SecurityStatusError => e
       sspi_server.free_handles
       StateStore.clear_state
+      
+      resp.status = 401
       resp['www-authenticate'] = @auth_type
       resp['Content-Type'] = "text/plain"
-      resp.status = 401
       resp.body = e.message
       puts "*** server encountered the following error ***\n #{e.message}"
       return
     end
     
-    resp['Remote-User'] = sspi_server.username
-    resp['Remote-User-Domain'] = sspi_server.domain
-    resp.status = 200
-    resp['Content-Type'] = "text/plain"
-    resp.body = "#{Time.now}: Hello #{sspi_server.username} at #{sspi_server.domain}"
-    if sspi_server.token && sspi_server.token.length > 0
-      resp['www-authenticate'] = sspi_server.construct_http_header(auth_type, sspi_server.token)
-    end
-    
-    StateStore.clear_state
+    StateStore.clear_state if authenticated
   end
 
   def self.run(url,auth_type)
