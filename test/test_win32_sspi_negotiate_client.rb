@@ -219,10 +219,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   end
   
   def test_authenticate_and_continue
-    client = Class.new(MockNegotiateClient) do
-      def credentials_handle; @credentials_handle; end
-      def context_handle; @context_handle; end
-    end.new(spn:SPN)
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
     counter = 0
     token = nil
     while client.authenticate_and_continue?(token)
@@ -247,8 +244,8 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     refute_nil fch_args
     assert_equal 1, fch_args.length
     
-    assert_nil client.credentials_handle
-    assert_nil client.context_handle
+    assert_nil client.instance_variable_get(:@credentials_handle)
+    assert_nil client.instance_variable_get(:@context_handle)
   end
   
   def test_authenticate_and_continue_when_no_authenticate_header
