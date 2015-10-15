@@ -308,6 +308,58 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_nil server.instance_variable_get(:@credentials_handle)
     assert_nil server.instance_variable_get(:@context_handle)
   end
+  
+  def test_http_authenticate
+    server = Class.new(MockNegotiateServer) do
+      def accept_security_context(*args)
+        status = self.retrieve_state(:asc) ? 
+                  Windows::Constants::SEC_I_COMPLETE_NEEDED :
+                  Windows::Constants::SEC_I_CONTINUE_NEEDED
+        super
+        return status
+      end
+    end.new
+    
+    counter = 0
+    authenticated = false
+    until( authenticated )
+      header = Base64.strict_encode64(MockSpnegoToken)
+      authenticated = server.http_authenticate(header) do |header|
+        counter += 1
+        fail "loop failed to complete in a reasonable iteration count" if counter > 3
+        header
+      end
+    end
+    
+    assert_equal 2, counter
+
+    ach_args = server.retrieve_state(:ach)
+    refute_nil ach_args
+    assert_equal 9, ach_args.length
+    
+    asc_args = server.retrieve_state(:asc)
+    refute_nil asc_args
+    assert_equal 9, asc_args.length
+    
+    cat_args = server.retrieve_state(:cat)
+    refute_nil cat_args
+    assert_equal 2, cat_args.length
+    
+    dsc_args = server.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = server.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+    
+    fcb_args = server.retrieve_state(:fcb)
+    refute_nil fcb_args
+    assert_equal 1, fcb_args.length
+    
+    assert_nil server.instance_variable_get(:@credentials_handle)
+    assert_nil server.instance_variable_get(:@context_handle)
+  end
 
   def teardown
     @server = nil

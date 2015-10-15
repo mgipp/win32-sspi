@@ -23,6 +23,41 @@ module Win32
           @context_handle = nil
         end
         
+        def http_authenticate(header,&block)
+          authenticated = false
+
+          status = acquire_handle
+          if SEC_E_OK == status
+            @auth_type, @token = de_construct_http_header(header)
+            status = accept_context(self.token)
+            if SEC_I_CONTINUE_NEEDED == status
+              header = construct_http_header(self.auth_type,self.token)
+              block.call(header,authenticated)
+              return authenticated
+            end
+            
+            if [SEC_I_COMPLETE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE].include?(status)
+              status = complete_authentication
+            end
+            
+            if SEC_E_OK == status
+              authenticated = true
+              status = query_attributes
+              if SEC_E_OK == status
+                free_handles
+              end
+              
+              header = nil
+              if self.token && self.token.length > 0
+                header = construct_http_header(self.auth_type,self.token)
+              end
+              block.call(header,authenticated)
+            end
+          end
+          
+          return authenticated
+        end
+        
         def authenticate_and_continue?(token)
           status = acquire_handle
           if SEC_E_OK == status
