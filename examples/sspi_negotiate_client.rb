@@ -14,24 +14,14 @@ class RubySSPIClient
     client = ('Negotiate' == auth_type) ? 
       Win32::SSPI::Negotiate::Client.new(spn:"HTTP/#{uri.host}") : 
       Win32::SSPI::Negotiate::Client.new(auth_type:auth_type)
-    token = nil
     
     Net::HTTP.start(uri.host, uri.port) do |http|
-      while client.authenticate_and_continue?(token)
+      resp = nil
+      client.http_authenticate do |header|
         req = Net::HTTP::Get.new(uri.path)
-        req['Authorization'] = client.construct_http_header(client.auth_type,client.token)
+        req['Authorization'] = header
         resp = http.request(req)
-        header = resp['www-authenticate']
-        if header
-          auth_type, token = client.de_construct_http_header(header)
-        end
-      end
-      
-      if 'NTLM' == auth_type
-        # complete final leg of authentication protocol
-        req = Net::HTTP::Get.new(uri.path)
-        req['Authorization'] = client.construct_http_header(client.auth_type,client.token)
-        resp = http.request(req)
+        resp['www-authenticate']
       end
       
       puts resp.body if resp.body

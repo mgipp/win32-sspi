@@ -38,8 +38,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   def test_token_basic_functionality
     assert_respond_to(@client, :token)
     assert_nothing_raised{ @client.token }
-    assert_kind_of(String, @client.token)
-    assert_equal "", @client.token
+    assert_nil @client.token
   end
 
   def test_acquire_handle_basic_functionality
@@ -325,6 +324,68 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_equal MockCredentialHandle, args[7].marshal_dump
     assert_kind_of Windows::Structs::TimeStamp, args[8], "unexpected pts_expiry"
     assert_equal MockTimeStamp, args[8].marshal_dump
+  end
+  
+  def test_http_authenticate
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
+    counter = 0
+    client.http_authenticate do |header|
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+      header
+    end
+    
+    assert_equal 1, counter
+
+    acquire_args = client.retrieve_state(:acquire)
+    refute_nil acquire_args
+    assert_equal 9, acquire_args.length
+    
+    isc_args = client.retrieve_state(:isc)
+    refute_nil isc_args
+    assert_equal 12, isc_args.length
+    
+    dsc_args = client.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = client.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+    
+    assert_nil client.instance_variable_get(:@credentials_handle)
+    assert_nil client.instance_variable_get(:@context_handle)
+  end
+  
+  def test_http_authenticate_with_ntlm_protocol
+    client = Class.new(MockNegotiateClient).new(auth_type:'NTLM')
+    counter = 0
+    client.http_authenticate do |header|
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+      header
+    end
+
+    assert_equal 2, counter
+
+    acquire_args = client.retrieve_state(:acquire)
+    refute_nil acquire_args
+    assert_equal 9, acquire_args.length
+    
+    isc_args = client.retrieve_state(:isc)
+    refute_nil isc_args
+    assert_equal 12, isc_args.length
+    
+    dsc_args = client.retrieve_state(:dsc)
+    refute_nil dsc_args
+    assert_equal 1, dsc_args.length
+    
+    fch_args = client.retrieve_state(:fch)
+    refute_nil fch_args
+    assert_equal 1, fch_args.length
+    
+    assert_nil client.instance_variable_get(:@credentials_handle)
+    assert_nil client.instance_variable_get(:@context_handle)
   end
   
   def teardown

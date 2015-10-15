@@ -16,9 +16,33 @@ module Win32
         def initialize(options={})
           @spn = options[:spn]
           @auth_type = options[:auth_type] || "Negotiate"
-          @token = ""
+          @token = nil
           @credentials_handle = nil
           @context_handle = nil
+        end
+        
+        def http_authenticate(&block)
+          status = acquire_handle
+          if SEC_E_OK == status
+            begin
+              status = initialize_context(self.token)
+              if SEC_I_CONTINUE_NEEDED == status
+                header = construct_http_header(self.auth_type,self.token)
+                header = block.call(header)
+                @auth_type, @token = de_construct_http_header(header) if header
+              end
+            end while( SEC_I_CONTINUE_NEEDED == status )
+            
+            # if using NTLM protocol we need to complete the final leg of the authentication
+            if 'NTLM' == self.auth_type && SEC_E_OK == status
+              header = construct_http_header(self.auth_type,self.token)
+              block.call(header)
+            end
+            
+            if SEC_E_OK == status
+              free_handles
+            end
+          end
         end
         
         def authenticate_and_continue?(token)
