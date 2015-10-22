@@ -329,10 +329,10 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     authenticated = false
     until( authenticated )
       header = Base64.strict_encode64(MockSpnegoToken)
-      authenticated = server.http_authenticate(header) do |header|
+      authenticated = server.http_authenticate(header) do |hdr|
         counter += 1
         fail "loop failed to complete in a reasonable iteration count" if counter > 3
-        header
+        hdr
       end
     end
     
