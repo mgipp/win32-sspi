@@ -102,11 +102,6 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_equal 1, @server.method(:free_credentials_handle).arity
   end
 
-  def test_authenticate_and_continue_basic_functionality
-    assert_respond_to(@server, :authenticate_and_continue?)
-    assert_equal 1, @server.method(:authenticate_and_continue?).arity
-  end
-  
   def test_acquire_handle_invokes_windows_api_as_expected
     server = Class.new(MockNegotiateServer).new
     assert_nothing_raised{ @status = server.acquire_handle }
@@ -294,24 +289,6 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     
     assert_nil server.instance_variable_get(:@context_handle)
     assert_nil server.instance_variable_get(:@credentials_handle)
-  end
-  
-  def test_authenticate_and_continue
-    server = Class.new(MockNegotiateServer) do
-      def accept_security_context(*args)
-        super
-        return Windows::Constants::SEC_I_COMPLETE_NEEDED
-      end
-    end.new
-    counter = 0
-    token = MockSpnegoToken
-    while server.authenticate_and_continue?(token)
-      token = server.token
-      counter += 1
-      fail "loop failed to complete in a reasonable iteration count" if counter > 3
-    end
-
-    assert_server_call_state(server)
   end
   
   def test_http_authenticate
