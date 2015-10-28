@@ -118,7 +118,14 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
       end
     end.new(spn:SPN)
 
-    assert_raises(SecurityStatusError){ client.acquire_handle }
+    exception = assert_raises(SecurityStatusError){ client.acquire_handle }
+    assert_not_nil exception
+    expected_message = <<-EOM
+AcquireCredentialsHandle:
+ffi_errno:0 win32_status:0x80090322
+win32 message:The target principal name is incorrect.\r
+EOM
+    assert_equal expected_message, exception.message
   end
   
   def test_initialize_context_invokes_windows_api_as_expected
@@ -158,7 +165,14 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     end.new(spn:SPN)
 
     assert_nothing_raised{ client.acquire_handle }
-    assert_raises(SecurityStatusError){ client.initialize_context }
+    exception = assert_raises(SecurityStatusError){ client.initialize_context }
+    assert_not_nil exception
+    expected_message = <<-EOM
+InitializeSecurityContext:
+ffi_errno:0 win32_status:0x80090308
+win32 message:The token supplied to the function is invalid\r
+EOM
+    assert_equal expected_message, exception.message
   end
   
   def test_free_context_and_credentials

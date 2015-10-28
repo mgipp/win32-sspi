@@ -18,14 +18,14 @@ class SecurityStatusError < StandardError
 
   def initialize(context,status,errno)
     hex_status = '0x%X' % status
-    msg = get_last_error(errno)
-    super("#{context}:\nstatus:#{hex_status}\nmessage:#{msg}")
+    msg = get_return_status_message(status)
+    super("#{context}:\nffi_errno:#{errno} win32_status:#{hex_status}\nwin32 message:#{msg}")
   end
 
-  def get_last_error(err_num = FFI.errno)
+  def get_return_status_message(win32_return_status)
     buf = FFI::MemoryPointer.new(:char, 512)
     flags = 0x00001000 # means format message from system table
-    FormatMessageA(flags, 0, err_num, 0, buf, buf.size, nil)
+    FormatMessageA(flags, 0, win32_return_status, 0, buf, buf.size, nil)
     buf.read_string
   end
 end
