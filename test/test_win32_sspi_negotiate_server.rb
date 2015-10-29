@@ -327,6 +327,34 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     
     assert_server_call_state(server)
   end
+  
+  def test_authenticate
+    server = Class.new(MockNegotiateServer) do
+      def accept_security_context(*args)
+        status = self.retrieve_state(:asc) ? 
+                  Windows::Constants::SEC_I_COMPLETE_NEEDED :
+                  Windows::Constants::SEC_I_CONTINUE_NEEDED
+        super
+        return status
+      end
+    end.new
+    
+    counter = 0
+    authenticated = false
+    until( authenticated )
+      client_msg = MockSpnegoToken
+      authenticated = server.authenticate(client_msg) do |msg|
+        counter += 1
+        fail "loop failed to complete in a reasonable iteration count" if counter > 3
+        assert_equal MockSecBufferContent,msg
+        msg
+      end
+    end
+    
+    assert_equal 2, counter
+    
+    assert_server_call_state(server)
+  end
 
   def teardown
     @server = nil

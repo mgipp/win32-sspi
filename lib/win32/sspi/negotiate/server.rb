@@ -27,6 +27,10 @@ module Win32
           perform_authenticate(header,block,true)
         end
         
+        def authenticate(client_msg,&block)
+          perform_authenticate(client_msg,block,false)
+        end
+        
         def perform_authenticate(client_msg,block,is_http_header)
           authenticated = false
 
