@@ -11,7 +11,7 @@ end
 class RubySSPIClient
   def self.run(url,auth_type)
     uri = URI.parse(url)
-    client = ('Negotiate' == auth_type) ? 
+    client = (Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE == auth_type) ? 
       Win32::SSPI::Negotiate::Client.new(spn:"HTTP/#{uri.host}") : 
       Win32::SSPI::Negotiate::Client.new(auth_type:auth_type)
     
@@ -37,6 +37,6 @@ if __FILE__ == $0
   end
 
   url = ARGV[0]
-  auth_type = (2 == ARGV.length) ? ARGV[1] : "Negotiate"
+  auth_type = (2 == ARGV.length) ? ARGV[1] : Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE
   RubySSPIClient.run(url,auth_type)
 end

@@ -11,6 +11,9 @@ module Win32
         include Windows::Structs
         include Windows::Functions
         
+        AUTH_TYPE_NEGOTIATE = 'Negotiate'
+        AUTH_TYPE_NTLM = 'NTLM'
+        
         def create_sec_winnt_auth_identity(username,domain,password)
           auth_struct = SEC_WINNT_AUTH_IDENTITY.new
           auth_struct[:Flags] = SEC_WINNT_AUTH_IDENTITY_ANSI

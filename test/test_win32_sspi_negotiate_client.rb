@@ -41,10 +41,10 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
   end
   
   def assert_base64_http_header(header,auth_type)
-    if 'Negotiate' == auth_type
+    if Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE == auth_type
       assert_match( /\ANegotiate \p{Print}+={,2}\z/,header)
     end
-    if 'NTLM' == auth_type
+    if Win32::SSPI::API::Common::AUTH_TYPE_NTLM == auth_type
       assert_match( /\ANTLM \p{Print}+={,2}\z/,header)
     end
   end
@@ -60,7 +60,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     assert_respond_to(@client, :auth_type)
     assert_nothing_raised{ @client.auth_type }
     assert_kind_of(String, @client.auth_type)
-    assert_equal "Negotiate", @client.auth_type
+    assert_equal Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE, @client.auth_type
     
     client = Win32::SSPI::Negotiate::Client.new(spn:SPN, auth_type:"Kerberos")
     assert_equal "Kerberos", client.auth_type
@@ -94,7 +94,7 @@ class TC_Win32_SSPI_Negotiate_Client < Test::Unit::TestCase
     args = client.retrieve_state(:acquire)
     assert_equal 9, args.length, "acquire_credentials_handle should have 9 arguments"
     assert_equal SPN, args[0], "unexpected psz_principal"
-    assert_equal 'Negotiate', args[1], "unexpected psz_package"
+    assert_equal Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE, args[1], "unexpected psz_package"
     assert_equal Windows::Constants::SECPKG_CRED_OUTBOUND, args[2], "unexpected f_credentialuse"
     assert_nil args[3], "unexpected pv_logonid"
     assert_nil args[4], "unexpected p_authdata"
@@ -259,14 +259,14 @@ EOM
   end
   
   def test_acquire_handle_invokes_windows_api_as_expected_with_ntlm_auth_type
-    client = Class.new(MockNegotiateClient).new(auth_type:'NTLM')
+    client = Class.new(MockNegotiateClient).new(auth_type:Win32::SSPI::API::Common::AUTH_TYPE_NTLM)
     assert_nothing_raised{ @status = client.acquire_handle }
     assert_equal Windows::Constants::SEC_E_OK, @status
 
     args = client.retrieve_state(:acquire)
     assert_equal 9, args.length, "acquire_credentials_handle should have 9 arguments"
     assert_nil args[0], "unexpected psz_principal"
-    assert_equal 'NTLM', args[1], "unexpected psz_package"
+    assert_equal Win32::SSPI::API::Common::AUTH_TYPE_NTLM, args[1], "unexpected psz_package"
     assert_equal Windows::Constants::SECPKG_CRED_OUTBOUND, args[2], "unexpected f_credentialuse"
     assert_nil args[3], "unexpected pv_logonid"
     assert_kind_of Windows::Structs::SEC_WINNT_AUTH_IDENTITY, args[4], "unexpected p_authdata"
@@ -286,7 +286,7 @@ EOM
     client.http_authenticate do |header|
       counter += 1
       fail "loop failed to complete in a reasonable iteration count" if counter > 3
-      assert_base64_http_header(header,'Negotiate')
+      assert_base64_http_header(header,Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE)
       header
     end
     
@@ -296,12 +296,12 @@ EOM
   end
   
   def test_http_authenticate_with_ntlm_protocol
-    client = Class.new(MockNegotiateClient).new(auth_type:'NTLM')
+    client = Class.new(MockNegotiateClient).new(auth_type:Win32::SSPI::API::Common::AUTH_TYPE_NTLM)
     counter = 0
     client.http_authenticate do |header|
       counter += 1
       fail "loop failed to complete in a reasonable iteration count" if counter > 3
-      assert_base64_http_header(header,'NTLM')
+      assert_base64_http_header(header,Win32::SSPI::API::Common::AUTH_TYPE_NTLM)
       header
     end
 

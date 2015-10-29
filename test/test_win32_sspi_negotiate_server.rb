@@ -49,10 +49,10 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
   end
   
   def assert_base64_http_header(header,auth_type)
-    if 'Negotiate' == auth_type
+    if Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE == auth_type
       assert_match( /\ANegotiate \p{Print}+={,2}\z/,header)
     end
-    if 'NTLM' == auth_type
+    if Win32::SSPI::API::Common::AUTH_TYPE_NTLM == auth_type
       assert_match( /\ANTLM \p{Print}+={,2}\z/,header)
     end
   end
@@ -62,7 +62,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     assert_respond_to(@server, :auth_type=)
     assert_nothing_raised{ @server.auth_type }
     assert_kind_of(String, @server.auth_type)
-    assert_equal "Negotiate", @server.auth_type
+    assert_equal Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE, @server.auth_type
     
     server = Win32::SSPI::Negotiate::Server.new(auth_type: "Kerberos")
     assert_equal "Kerberos", server.auth_type
@@ -120,7 +120,7 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     args = server.retrieve_state(:ach)
     assert_equal 9, args.length, "unexpected args"
     assert_nil args[0], "unexpected psz_principal"
-    assert_equal 'Negotiate', args[1], "unexpected psz_package"
+    assert_equal Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE, args[1], "unexpected psz_package"
     assert_equal Windows::Constants::SECPKG_CRED_INBOUND, args[2], "unexpected f_credentialuse"
     assert_nil args[3], "unexpected pv_logonid"
     assert_nil args[4], "unexpected p_authdata"
@@ -314,11 +314,11 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     counter = 0
     authenticated = false
     until( authenticated )
-      header = "Negotiate #{Base64.strict_encode64(MockSpnegoToken)}"
+      header = "#{Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE} #{Base64.strict_encode64(MockSpnegoToken)}"
       authenticated = server.http_authenticate(header) do |hdr|
         counter += 1
         fail "loop failed to complete in a reasonable iteration count" if counter > 3
-        assert_base64_http_header(hdr,'Negotiate')
+        assert_base64_http_header(hdr,Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE)
         hdr
       end
     end

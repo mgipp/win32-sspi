@@ -26,7 +26,7 @@ class StateStore
     state.clear
   end
   
-  def self.retrieve_server(auth_type='Negotiate')
+  def self.retrieve_server(auth_type=Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE)
     state[:server] ||= Win32::SSPI::Negotiate::Server.new(auth_type: auth_type)
     state[:server]
   end
@@ -94,6 +94,6 @@ if $0 == __FILE__
   end
 
   url = ARGV[0]
-  auth_type = (2 == ARGV.length) ? ARGV[1] : "Negotiate"
+  auth_type = (2 == ARGV.length) ? ARGV[1] : Win32::SSPI::API::Common::AUTH_TYPE_NEGOTIATE
   RubySSPIServlet.run(url,auth_type)
 end

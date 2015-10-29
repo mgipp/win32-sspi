@@ -15,7 +15,7 @@ module Win32
       
         def initialize(options={})
           @spn = options[:spn]
-          @auth_type = options[:auth_type] || "Negotiate"
+          @auth_type = options[:auth_type] || AUTH_TYPE_NEGOTIATE
           @token = nil
           @credentials_handle = nil
           @context_handle = nil
@@ -40,7 +40,7 @@ module Win32
             end while( SEC_I_CONTINUE_NEEDED == status )
             
             # if using NTLM protocol we need to complete the final leg of the authentication
-            if 'NTLM' == self.auth_type && SEC_E_OK == status
+            if AUTH_TYPE_NTLM == self.auth_type && SEC_E_OK == status
               block.call(block_arg_from_token(with_http_header))
             end
             
@@ -68,7 +68,7 @@ module Win32
           return SEC_E_OK if @credentials_handle
           
           auth_data = nil
-          if 'NTLM' == @auth_type
+          if AUTH_TYPE_NTLM == @auth_type
             auth_data = create_sec_winnt_auth_identity(ENV['USERNAME'],ENV['USERDOMAIN'],nil)
           end
           

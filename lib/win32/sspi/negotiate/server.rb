@@ -15,7 +15,7 @@ module Win32
         attr_reader :domain
       
         def initialize(options={})
-          @auth_type = options[:auth_type] || "Negotiate"
+          @auth_type = options[:auth_type] || AUTH_TYPE_NEGOTIATE
           @token = ""
           @username = ''
           @domain = ''
