@@ -310,6 +310,21 @@ EOM
     assert_client_call_state(client)
   end
   
+  def test_authenticate
+    client = Class.new(MockNegotiateClient).new(spn:SPN)
+    counter = 0
+    client.authenticate do |token|
+      counter += 1
+      fail "loop failed to complete in a reasonable iteration count" if counter > 3
+      assert_equal MockSecBufferContent, token
+      token
+    end
+    
+    assert_equal 1, counter
+
+    assert_client_call_state(client)
+  end
+  
   def teardown
     @client = nil
   end
