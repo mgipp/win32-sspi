@@ -21,37 +21,19 @@ namespace :gem do
 end
 
 namespace :test do
+  Rake::TestTask.new(:struct) do |t|
+    t.test_files = FileList['test/test_win32_sspi_structure_creates.rb']
+    t.warning = true
+    t.verbose = true
+  end
+
   Rake::TestTask.new(:client) do |t|
-    t.test_files = FileList['test/test_win32_sspi_*_client.rb']
-    t.warning = true
-    t.verbose = true
-  end
-
-  Rake::TestTask.new(:ntlm_client) do |t|
-    t.test_files = FileList['test/test_win32_sspi_ntlm_client.rb']
-    t.warning = true
-    t.verbose = true
-  end
-
-  Rake::TestTask.new(:negotiate_client) do |t|
     t.test_files = FileList['test/test_win32_sspi_negotiate_client.rb']
     t.warning = true
     t.verbose = true
   end
 
   Rake::TestTask.new(:server) do |t|
-    t.test_files = FileList['test/test_win32_sspi_*_server.rb']
-    t.warning = true
-    t.verbose = true
-  end
-
-  Rake::TestTask.new(:ntlm_server) do |t|
-    t.test_files = FileList['test/test_win32_sspi_ntlm_server.rb']
-    t.warning = true
-    t.verbose = true
-  end
-
-  Rake::TestTask.new(:negotiate_server) do |t|
     t.test_files = FileList['test/test_win32_sspi_negotiate_server.rb']
     t.warning = true
     t.verbose = true
