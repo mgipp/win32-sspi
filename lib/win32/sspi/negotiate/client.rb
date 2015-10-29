@@ -22,25 +22,40 @@ module Win32
         end
         
         def http_authenticate(&block)
+          perform_authenticate(block)
+        end
+        
+        def perform_authenticate(block,with_http_header=true)
           status = acquire_handle
           if SEC_E_OK == status
             begin
               status = initialize_context(self.token)
               if SEC_I_CONTINUE_NEEDED == status
-                header = construct_http_header(self.auth_type,self.token)
-                header = block.call(header)
-                @auth_type, @token = de_construct_http_header(header) if header
+                token_from_block_result(block.call(block_arg_from_token))
               end
             end while( SEC_I_CONTINUE_NEEDED == status )
             
             # if using NTLM protocol we need to complete the final leg of the authentication
             if 'NTLM' == self.auth_type && SEC_E_OK == status
-              header = construct_http_header(self.auth_type,self.token)
-              block.call(header)
+              block.call(block_arg_from_token)
             end
             
             if SEC_E_OK == status
               free_handles
+            end
+          end
+        end
+        
+        def block_arg_from_token(with_http_header=true)
+          with_http_header ? construct_http_header(self.auth_type,self.token) : self.token
+        end
+        
+        def token_from_block_result(block_result,with_http_header=true)
+          if block_result
+            if with_http_header
+              @auth_type, @token = de_construct_http_header(block_result)
+            else
+              @token = block_result
             end
           end
         end
