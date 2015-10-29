@@ -5,11 +5,11 @@ require 'test-unit'
 require 'win32/sspi/negotiate/server'
 
 class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
-  MockSpnegoToken = "123456789012345678901234567890"
+  MockSpnegoToken = Random.new.bytes(128)
   MockCredentialHandle = [777,888]
   MockTimeStamp = [0x000000FF,0xFF000000]
   MockContextHandle = [123,987]
-  MockSecBufferContent = "0123456789"*10
+  MockSecBufferContent = Random.new.bytes(128)
   ContextAttr = Windows::Constants::ISC_REQ_CONFIDENTIALITY | 
                 Windows::Constants::ISC_REQ_REPLAY_DETECT | 
                 Windows::Constants::ISC_REQ_CONNECTION
@@ -46,6 +46,15 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     
     assert_nil server.instance_variable_get(:@credentials_handle)
     assert_nil server.instance_variable_get(:@context_handle)
+  end
+  
+  def assert_base64_http_header(header,auth_type)
+    if 'Negotiate' == auth_type
+      assert_match( /\ANegotiate \p{Print}+={,2}\z/,header)
+    end
+    if 'NTLM' == auth_type
+      assert_match( /\ANTLM \p{Print}+={,2}\z/,header)
+    end
   end
 
   def test_auth_type_basic_functionality
@@ -305,10 +314,11 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     counter = 0
     authenticated = false
     until( authenticated )
-      header = Base64.strict_encode64(MockSpnegoToken)
+      header = "Negotiate #{Base64.strict_encode64(MockSpnegoToken)}"
       authenticated = server.http_authenticate(header) do |hdr|
         counter += 1
         fail "loop failed to complete in a reasonable iteration count" if counter > 3
+        assert_base64_http_header(hdr,'Negotiate')
         hdr
       end
     end

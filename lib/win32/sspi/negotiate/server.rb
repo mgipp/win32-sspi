@@ -24,15 +24,18 @@ module Win32
         end
         
         def http_authenticate(header,&block)
+          perform_authenticate(header,block,true)
+        end
+        
+        def perform_authenticate(client_msg,block,is_http_header)
           authenticated = false
 
           status = acquire_handle
           if SEC_E_OK == status
-            @auth_type, @token = de_construct_http_header(header)
+            token_from_client_message(client_msg,is_http_header)
             status = accept_context(self.token)
             if SEC_I_CONTINUE_NEEDED == status
-              header = construct_http_header(self.auth_type,self.token)
-              block.call(header,authenticated)
+              block.call(block_arg_from_token(is_http_header),authenticated)
               return authenticated
             end
             
@@ -47,15 +50,29 @@ module Win32
                 free_handles
               end
               
-              header = nil
-              if self.token && self.token.length > 0
-                header = construct_http_header(self.auth_type,self.token)
-              end
-              block.call(header,authenticated)
+              block.call(block_arg_from_token(is_http_header),authenticated)
             end
           end
           
           return authenticated
+        end
+        
+        def block_arg_from_token(is_http_header)
+          block_arg = nil
+          if self.token && self.token.length > 0
+            block_arg = is_http_header ? construct_http_header(self.auth_type,self.token) : self.token
+          end
+          block_arg
+        end
+        
+        def token_from_client_message(client_msg,is_http_header)
+          if client_msg
+            if is_http_header
+              @auth_type, @token = de_construct_http_header(client_msg)
+            else
+              @token = client_msg
+            end
+          end
         end
         
         def acquire_handle
