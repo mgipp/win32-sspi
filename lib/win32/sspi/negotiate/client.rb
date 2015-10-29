@@ -19,6 +19,9 @@ module Win32
           @token = nil
           @credentials_handle = nil
           @context_handle = nil
+          @username = options[:username]
+          @domain = options[:domain]
+          @password = options[:password]
         end
         
         def http_authenticate(&block)
@@ -69,7 +72,9 @@ module Win32
           
           auth_data = nil
           if AUTH_TYPE_NTLM == @auth_type
-            auth_data = create_sec_winnt_auth_identity(ENV['USERNAME'],ENV['USERDOMAIN'],nil)
+            @username ||= ENV['USERNAME']
+            @domain ||= ENV['USERDOMAIN']
+            auth_data = create_sec_winnt_auth_identity(@username,@domain,@password)
           end
           
           @credentials_handle = create_credhandle

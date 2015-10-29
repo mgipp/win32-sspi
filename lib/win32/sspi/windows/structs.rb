@@ -24,6 +24,11 @@ module Windows
         bsize = self[:DomainLength]
         bsize > 0 ? self[:Domain].read_string_length(bsize) : nil
       end
+      
+      def password_to_ruby_s
+        bsize = self[:PasswordLength]
+        bsize > 0 ? self[:Password].read_string_length(bsize) : nil
+      end
     end
 
     class SecHandle < FFI::Struct
