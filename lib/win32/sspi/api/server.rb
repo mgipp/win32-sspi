@@ -22,7 +22,7 @@ module Win32
         end
         
         def free_context_buffer(pv_contextbuffer)
-          status = FreeContextBuffer(pv_contextbuffer.to_ptr)
+          status = FreeContextBuffer(pv_contextbuffer)
           return status
         end
       end

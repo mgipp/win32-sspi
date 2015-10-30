@@ -138,6 +138,10 @@ module Windows
       def to_ruby_s
         self[:sUserName].null? ? nil : self[:sUserName].read_string
       end
+      
+      def to_username_ptr
+        self[:sUserName]
+      end
     end
   end
 end

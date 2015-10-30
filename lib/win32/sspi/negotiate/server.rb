@@ -174,7 +174,7 @@ module Win32
             @domain, @username = @username.split("\\")
           end
           
-          status = free_context_buffer(ptr)
+          status = free_context_buffer(ptr.to_username_ptr)
           if SEC_E_OK != status
             raise SecurityStatusError.new('FreeContextBuffer', status, FFI.errno)
           end

@@ -238,6 +238,13 @@ class TC_Win32_SSPI_Negotiate_Server < Test::Unit::TestCase
     
     assert_equal "jimmy", server.username
     assert_equal "jes.local", server.domain
+
+    # Need to grap this address for test below
+    expected_fcb_ptr = args[2].to_username_ptr
+    
+    args = server.retrieve_state(:fcb)
+    assert_equal 1, args.length
+    assert_equal expected_fcb_ptr, args[0], "unexpected pv_contextbuffer"
   end
   
   def test_query_attributes_without_domain_in_user_string
