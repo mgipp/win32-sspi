@@ -3,7 +3,7 @@ require 'rubygems'
 Gem::Specification.new do |spec|
   spec.name       = 'win32-sspi'
   spec.summary    = 'Yet another SSPI library for Windows'
-  spec.version    = '0.0.1.pre'
+  spec.version    = '0.0.1.rc1'
   spec.authors    = ['Gary Sick', 'Daniel J. Berger']
   spec.license    = 'MIT'
   spec.email      = 'garys361@gmail.com'
