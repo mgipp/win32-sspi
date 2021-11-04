@@ -86,8 +86,8 @@ module Win32
           b64_token.nil? ? "#{auth_type}" : "#{auth_type} #{b64_token}"
         end
         
-        def de_construct_http_header(header)
-          auth_type, b64_token = header.split(' ')
+        def de_construct_http_header(block_result)
+          auth_type, b64_token = block_result.header['www-authenticate'].split(' ')
           token = b64_token.nil? ? nil : Base64.strict_decode64(b64_token)
           [auth_type, token]
         end
